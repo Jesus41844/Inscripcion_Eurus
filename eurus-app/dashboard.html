@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EURUS — Panel Principal</title>
+  <link rel="stylesheet" href="css/styles.css"/>
+  <style>
+    /* ── Paleta EURUS: azul oscuro ── */
+    :root {
+      --eurus:        #154360;
+      --eurus-medio:  #1a5276;
+      --eurus-claro:  #2471a3;
+      --eurus-fondo:  #d6eaf8;
+      --eurus-sombra: rgba(21, 67, 96, 0.20);
+    }
+
+    .topbar {
+      background: linear-gradient(135deg, var(--eurus) 0%, var(--eurus-claro) 100%);
+      box-shadow: 0 2px 12px var(--eurus-sombra);
+    }
+
+    .bienvenida {
+      background: linear-gradient(135deg, var(--eurus) 0%, var(--eurus-claro) 100%);
+      color: #fff;
+      border-radius: 16px;
+      padding: 24px 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 28px var(--eurus-sombra);
+      position: relative;
+      overflow: hidden;
+      animation: fadeScaleIn 0.5s var(--ease-spring) both;
+    }
+    .bienvenida::after {
+      content: '🎓';
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 64px;
+      opacity: 0.10;
+    }
+    .bienvenida .saludo  { font-size: 13px; opacity: 0.8; }
+    .bienvenida .nombre  { font-size: 22px; font-weight: 700; margin: 4px 0 12px; }
+    .rol-pill {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* ── Tarjeta de acceso única ── */
+    .acceso-card {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px var(--eurus-sombra);
+      border-bottom: 4px solid var(--eurus-claro);
+      padding: 36px 24px;
+      text-align: center;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      transition: transform 0.2s var(--ease-spring), box-shadow 0.2s;
+      animation: cardCascade 0.42s var(--ease-spring) both;
+      animation-delay: 0.18s;
+      opacity: 0;
+    }
+    .acceso-card:hover {
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: 0 12px 32px var(--eurus-sombra);
+    }
+    .acceso-card:active { transform: scale(0.95); }
+    .acceso-card .icono { font-size: 52px; line-height: 1; }
+    .acceso-card .label {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--eurus);
+    }
+    .acceso-card .desc {
+      font-size: 13px;
+      color: var(--gris-medio);
+      line-height: 1.5;
+    }
+    .acceso-card .btn-entrar {
+      background: linear-gradient(135deg, var(--eurus-medio) 0%, var(--eurus-claro) 100%);
+      color: #fff;
+      padding: 12px 32px;
+      border-radius: 24px;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      margin-top: 8px;
+      box-shadow: 0 4px 12px var(--eurus-sombra);
+      transition: opacity 0.2s;
+    }
+    .acceso-card .btn-entrar:hover { opacity: 0.88; }
+
+    /* ── Stat mini inscripciones ── */
+    .stat-eurus {
+      background: var(--eurus-fondo);
+      border-radius: var(--radio);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+      animation: cardCascade 0.4s var(--ease-spring) both;
+      animation-delay: 0.10s;
+      opacity: 0;
+    }
+    .stat-eurus .num { font-size: 28px; font-weight: 700; color: var(--eurus); }
+    .stat-eurus .txt { font-size: 13px; color: var(--eurus-medio); }
+    .stat-eurus .txt strong { display: block; font-size: 15px; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <img src="icons/logoEurusblanco.png" alt="EURUS" style="height:28px;"/>
+  <h1>EURUS</h1>
+  <button class="btn-logout" id="btn-logout">Salir</button>
+</div>
+
+<div class="container">
+
+  <!-- BIENVENIDA -->
+  <div class="bienvenida">
+    <div class="saludo">Bienvenido,</div>
+    <div class="nombre" id="nombre-usuario">...</div>
+    <span class="rol-pill" id="rol-label">EURUS</span>
+  </div>
+
+  <!-- STAT RÁPIDA -->
+  <div class="stat-eurus" id="stat-inscripciones" style="display:none;">
+    <div class="num" id="stat-num">—</div>
+    <div class="txt">
+      <strong id="stat-evento-nombre">Cargando...</strong>
+      participantes inscritos en el evento activo
+    </div>
+  </div>
+
+  <!-- ACCESO PRINCIPAL -->
+  <a href="inscripciones.html" class="acceso-card">
+    <div class="icono">🎓</div>
+    <div class="label">Inscripciones EURUS</div>
+    <div class="desc">
+      Gestiona los participantes, genera QR, registra asistencia<br/>y emite certificados del evento.
+    </div>
+    <button class="btn-entrar">Abrir módulo →</button>
+  </a>
+
+</div>
+
+<script type="module">
+  import { guardRoute, getUsuarioActual, cerrarSesion } from "./js/auth.js";
+  import { infoRol } from "./js/permisos.js";
+  import { db } from "./js/firebase-config.js";
+  import {
+    collection, query, where, getDocs, orderBy, limit
+  } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+
+  guardRoute();
+
+  const usuario = getUsuarioActual();
+  const info    = infoRol(usuario.rol || "eurus");
+
+  // Redirigir si no tiene rol válido de Eurus
+  if (usuario.rol && usuario.rol !== "eurus" && usuario.rol !== "sin_rol") {
+    window.location.href = "index.html";
+  }
+
+  document.getElementById("nombre-usuario").textContent = usuario.nombre || "Usuario";
+  document.getElementById("rol-label").textContent      = info.label || "EURUS";
+
+  // Cargar stat del evento activo más reciente
+  async function cargarStatEvento() {
+    try {
+      const snapEv = await getDocs(
+        query(collection(db, "eventos_eurus"), where("activo","==",true), orderBy("creadoEn","desc"), limit(1))
+      );
+      if (snapEv.empty) return;
+
+      const evento = snapEv.docs[0].data();
+      const snapIns = await getDocs(
+        query(collection(db, "inscripciones_eurus"), where("eventoId","==", snapEv.docs[0].id))
+      );
+
+      document.getElementById("stat-num").textContent          = snapIns.size;
+      document.getElementById("stat-evento-nombre").textContent = evento.nombre;
+      document.getElementById("stat-inscripciones").style.display = "flex";
+    } catch (e) {
+      // Sin datos disponibles — silencioso
+    }
+  }
+
+  cargarStatEvento();
+  document.getElementById("btn-logout").addEventListener("click", cerrarSesion);
+</script>
+</body>
+</html>

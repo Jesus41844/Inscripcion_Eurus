@@ -1,0 +1,10 @@
+Instructivo de implementación para módulo de inscripciones de Eurus
+
+1. Crea un proyecto nuevo en https://console.firebase.google.com
+2. Activa Authentication → Google y Firestore Database
+3. Ve a Project Settings → General → tu app web → copia el firebaseConfig
+4. Pégalo en eurus-app/js/firebase-config.js reemplazando los "REEMPLAZAR"
+5. Agrega localhost y su dominio final en Authentication → Authorized domains
+6. Forma de importar archivo json a Firebase: Abre una terminal en la carpeta eurus-app y ejecuta npx serve .
+7. Entra a http://localhost:3000/importar-eurus.html, selecciona el JSON y presiona "Importar"
+8. Listo — abre http://localhost:3000/index.html

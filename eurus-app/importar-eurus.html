@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Importar datos EURUS</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; max-width: 560px; margin: 60px auto; padding: 0 20px; }
+    h2   { color: #154360; }
+    .zona { border: 2px dashed #2471a3; border-radius: 10px; padding: 36px 20px; text-align: center; cursor: pointer; background: #f0f6fb; margin: 16px 0; }
+    .zona:hover { background: #d6eaf8; }
+    .btn { background: #154360; color: #fff; border: none; padding: 14px 28px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 8px; display: block; width: 100%; }
+    .btn:hover { background: #2471a3; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .log { background: #f0f6fb; border-radius: 8px; padding: 16px; margin-top: 20px; font-size: 13px; color: #1a2e3e; line-height: 1.8; min-height: 60px; white-space: pre-wrap; }
+    input[type=file] { display: none; }
+    .aviso { background: #fff3cd; border-left: 4px solid #e6a817; border-radius: 6px; padding: 12px 16px; font-size: 13px; color: #6b4a00; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+  <h2>Importar backup EURUS</h2>
+  <div class="aviso">
+    ⚠️ Asegúrate de haber configurado el <code>firebase-config.js</code> con los datos
+    de tu nuevo proyecto Firebase antes de importar.
+  </div>
+  <p style="color:#555;font-size:14px;">
+    Selecciona el archivo <strong>backup-eurus-*.json</strong> que te enviaron
+    para cargarlo en tu Firebase.
+  </p>
+
+  <div class="zona" id="zona" onclick="document.getElementById('input-json').click()">
+    📂 Haz clic para seleccionar el archivo backup-eurus-*.json
+    <input type="file" id="input-json" accept=".json"/>
+  </div>
+
+  <div id="info-archivo" style="display:none;font-size:13px;color:#1a5276;margin-bottom:8px;"></div>
+  <button class="btn" id="btn-importar" style="display:none">Importar a Firebase</button>
+  <div class="log" id="log">Esperando archivo...</div>
+
+  <script type="module">
+    import { collection, doc, setDoc, Timestamp }
+      from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+    import { signInWithPopup, GoogleAuthProvider }
+      from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+    import { db, auth } from "./js/firebase-config.js";
+
+    const log = msg => { document.getElementById("log").textContent += "\n" + msg; };
+
+    let backupData = null;
+
+    function isoATimestamp(val) {
+      if (typeof val === "string" && /^\d{4}-\d{2}-\d{2}T/.test(val)) {
+        return Timestamp.fromDate(new Date(val));
+      }
+      if (val && typeof val === "object" && !Array.isArray(val)) {
+        const out = {};
+        for (const k of Object.keys(val)) out[k] = isoATimestamp(val[k]);
+        return out;
+      }
+      if (Array.isArray(val)) return val.map(isoATimestamp);
+      return val;
+    }
+
+    document.getElementById("input-json").addEventListener("change", e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          backupData = JSON.parse(ev.target.result);
+          const cols = Object.keys(backupData.colecciones || {});
+          const total = cols.reduce((s, c) => s + Object.keys(backupData.colecciones[c]).length, 0);
+          document.getElementById("info-archivo").style.display = "block";
+          document.getElementById("info-archivo").textContent =
+            `✓ Archivo: ${file.name} | Exportado: ${backupData.exportadoEn?.slice(0,10)} | ${total} documentos en ${cols.length} colecciones`;
+          document.getElementById("btn-importar").style.display = "block";
+          document.getElementById("log").textContent = "Archivo cargado. Presiona el botón para importar.";
+        } catch {
+          document.getElementById("log").textContent = "❌ El archivo no es un JSON válido.";
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    document.getElementById("btn-importar").addEventListener("click", async () => {
+      if (!backupData) return;
+      const btn = document.getElementById("btn-importar");
+      btn.disabled = true;
+      btn.textContent = "Importando...";
+      document.getElementById("log").textContent = "";
+
+      try {
+        if (!auth.currentUser) {
+          log("Iniciando sesión con Google...");
+          await signInWithPopup(auth, new GoogleAuthProvider());
+          log("✓ Sesión: " + auth.currentUser.email);
+        }
+
+        for (const [colNombre, docs] of Object.entries(backupData.colecciones)) {
+          log(`\nImportando ${colNombre}...`);
+          let ok = 0;
+          for (const [docId, data] of Object.entries(docs)) {
+            await setDoc(doc(collection(db, colNombre), docId), isoATimestamp(data));
+            ok++;
+          }
+          log(`  ✓ ${ok} documentos importados`);
+        }
+
+        log("\n✅ Importación completa. Ya puedes usar la app.");
+      } catch (e) {
+        log("\n❌ Error: " + e.message);
+        log("Verifica que firebase-config.js tenga la config correcta y que Firestore esté activado.");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Importar a Firebase";
+      }
+    });
+  </script>
+</body>
+</html>

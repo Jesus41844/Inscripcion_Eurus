@@ -27,15 +27,21 @@ function alerta(tipo, msg) {
 
 // ─── Cargar eventos ──────────────────────────────────────────────────────────
 async function cargarEventos() {
-  const snap = await getDocs(query(collection(db, "eventos_eurus"), orderBy("creadoEn", "desc")));
-  const sel  = el("sel-evento-qr");
-  snap.docs.forEach(d => {
-    const ev  = d.data();
-    const opt = document.createElement("option");
-    opt.value = d.id;
-    opt.textContent = ev.nombre;
-    sel.appendChild(opt);
-  });
+  try {
+    const snap = await getDocs(query(collection(db, "eventos_eurus"), orderBy("creadoEn", "desc")));
+    const sel  = el("sel-evento-qr");
+    snap.docs.forEach(d => {
+      const ev  = d.data();
+      const opt = document.createElement("option");
+      opt.value = d.id;
+      opt.textContent = ev.nombre;
+      sel.appendChild(opt);
+    });
+  } catch (e) {
+    console.error("[QR] Error al cargar eventos:", e);
+    dbg("ERROR", "❌ Error al cargar eventos: " + e.message);
+    alerta("error", "Error al cargar eventos. Verifica conexión.");
+  }
 }
 
 el("sel-evento-qr").addEventListener("change", async () => {
@@ -482,6 +488,7 @@ async function esperarRol() {
   for (let i = 0; i < 15; i++) {
     const rol = sessionStorage.getItem("rol");
     if (rol && tienePermiso(rol, "gestionar_inscripciones")) return true;
+    if (i === 0) dbg("INFO", "⏳ Esperando autenticación...");
     await new Promise(r => setTimeout(r, 200));
   }
   return false;
@@ -491,5 +498,5 @@ async function esperarRol() {
 dbg("INFO", "📱 App iniciada — esperando selección de evento y cámara");
 esperarRol().then(ok => {
   if (!ok) { window.location.href = "dashboard.html"; return; }
+  cargarEventos();
 });
-cargarEventos();

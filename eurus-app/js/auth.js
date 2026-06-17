@@ -9,6 +9,7 @@ import {
   doc, getDoc, setDoc, onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 import { tienePermiso } from "./permisos.js";
+export { tienePermiso };
 
 const provider = new GoogleAuthProvider();
 const PUBLIC_PAGES = ["index.html", ""];

@@ -387,13 +387,12 @@ function capturarFoto() {
 el("input-camera-native").addEventListener("change", async e => {
   const file = e.target.files[0];
   if (!file) {
-    // Usuario canceló — reiniciar scanner
     _capturando = false;
     await iniciarCamara();
     return;
   }
 
-  dbg("INFO", "📸 Foto nativa: " + (file.size / 1024).toFixed(1) + "KB");
+  dbg("INFO", "📸 Foto: " + (file.size / 1024).toFixed(1) + "KB, tipo: " + file.type);
   el("input-camera-native").value = "";
 
   // Mostrar preview
@@ -401,65 +400,127 @@ el("input-camera-native").addEventListener("change", async e => {
   el("capture-preview").src = previewUrl;
   el("capture-preview-wrap").style.display = "block";
 
-  let tempScanner, tempDiv;
+  // --- Decodificar imagen y redimensionar a max 1920px ---
+  let imgBitmap;
   try {
-    tempDiv = document.createElement("div");
-    tempDiv.id = "temp-native-" + Date.now();
-    tempDiv.style.display = "none";
-    document.body.appendChild(tempDiv);
-    tempScanner = new Html5Qrcode(tempDiv.id);
-    const result = await Promise.race([
-      tempScanner.scanFileV2(file, false),
-      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 12000))
-    ]);
-    tempScanner.clear();
-    tempDiv.remove();
-    tempScanner = null;
-    tempDiv = null;
-
-    dbg("DETECT", "🎯 QR detectado: " + result.decodedText);
-    const inscripcionId = result.decodedText;
-    qrDetectado = true;
-
-    const snap = await getDoc(doc(db, "inscripciones_eurus", inscripcionId));
-    if (!snap.exists()) {
-      alerta("error", "QR no reconocido. Participante no encontrado.");
-      qrDetectado = false;
-      _capturando = false;
-      await iniciarCamara();
-      return;
-    }
-
-    const p = { id: inscripcionId, ...snap.data() };
-    dbg("OK", "✅ Participante: " + p.nombre);
-
-    if (p.eventoId !== eventoActivo.id) {
-      alerta("error", "Este QR pertenece a otro evento (" + (p.eventoNombre || "?") + ").");
-      qrDetectado = false;
-      _capturando = false;
-      await iniciarCamara();
-      return;
-    }
-
-    participanteSel = p;
-    mostrarInfoParticipante(p);
+    imgBitmap = await createImageBitmap(file);
   } catch (e) {
-    if (tempScanner) { try { tempScanner.clear(); } catch (_) {} }
-    if (tempDiv && tempDiv.parentNode) tempDiv.remove();
-    const errMsg = (typeof e === "string") ? e : (e?.message || "");
-    if (errMsg.includes("No MultiFormat Readers")) {
-      dbg("WARN", "📸 QR no detectado en la foto");
-      alerta("error", "QR no detectado. Asegura buena luz y que el QR se vea completo.");
-    } else {
-      console.error("[QR] Error escaneando foto:", e);
-      dbg("ERROR", "❌ Error escaneando: " + (e.message || e));
-      alerta("error", "Error al escanear: " + (e.message || e));
-    }
-  } finally {
+    dbg("ERROR", "❌ No se pudo decodificar la imagen");
     _capturando = false;
-    if (!qrDetectado) {
-      await iniciarCamara();
+    await iniciarCamara();
+    return;
+  }
+
+  let sw = imgBitmap.width;
+  let sh = imgBitmap.height;
+  const MAX = 1920;
+  if (sw > MAX || sh > MAX) {
+    if (sw > sh) { sh = sh * MAX / sw; sw = MAX; }
+    else { sw = sw * MAX / sh; sh = MAX; }
+    sw = Math.round(sw);
+    sh = Math.round(sh);
+    const c2 = document.createElement("canvas");
+    c2.width = sw;
+    c2.height = sh;
+    const ctx2 = c2.getContext("2d");
+    ctx2.drawImage(imgBitmap, 0, 0, sw, sh);
+    imgBitmap.close();
+    imgBitmap = await createImageBitmap(c2);
+    dbg("INFO", "📸 Redimensionado a " + sw + "x" + sh);
+  } else {
+    dbg("INFO", "📸 Dimensiones originales: " + sw + "x" + sh);
+  }
+
+  let decodedText = null;
+
+  // --- Método 1: BarcodeDetector API (nativo Chrome Android) ---
+  if ('BarcodeDetector' in window) {
+    try {
+      const detector = new BarcodeDetector({ formats: ['qr_code'] });
+      const barcodes = await detector.detect(imgBitmap);
+      if (barcodes.length > 0) {
+        decodedText = barcodes[0].rawValue;
+        dbg("DETECT", "🎯 QR vía BarcodeDetector");
+      }
+    } catch (e) {
+      dbg("WARN", "⚠️ BarcodeDetector: " + e.message);
     }
+  }
+
+  // --- Método 2: Html5Qrcode scanFileV2 (ZXing) ---
+  if (!decodedText) {
+    let tempScanner, tempDiv;
+    try {
+      const c3 = document.createElement("canvas");
+      c3.width = sw;
+      c3.height = sh;
+      const ctx3 = c3.getContext("2d");
+      ctx3.drawImage(imgBitmap, 0, 0);
+      const blob = await new Promise(r => c3.toBlob(r, "image/png"));
+      if (!blob) throw new Error("No se pudo convertir a PNG");
+      const resizedFile = new File([blob], "scan.png", { type: "image/png" });
+
+      tempDiv = document.createElement("div");
+      tempDiv.id = "qr-temp-" + Date.now();
+      tempDiv.style.display = "none";
+      document.body.appendChild(tempDiv);
+      tempScanner = new Html5Qrcode(tempDiv.id);
+      const r = await Promise.race([
+        tempScanner.scanFileV2(resizedFile, false),
+        new Promise((_, reject) => setTimeout(() => reject("Timeout"), 10000))
+      ]);
+      decodedText = r.decodedText;
+      dbg("DETECT", "🎯 QR vía ZXing");
+    } catch (e) {
+      const errMsg = (typeof e === "string") ? e : (e?.message || "");
+      if (!errMsg.includes("No MultiFormat Readers") && !errMsg.includes("Timeout")) {
+        console.error("[QR] Error scanFileV2:", e);
+        dbg("ERROR", "❌ scanFileV2: " + errMsg);
+      }
+    } finally {
+      if (tempScanner) { try { tempScanner.clear(); } catch (_) {} }
+      if (tempDiv && tempDiv.parentNode) tempDiv.remove();
+    }
+  }
+
+  imgBitmap.close();
+
+  // --- Procesar resultado ---
+  if (decodedText) {
+    qrDetectado = true;
+    try {
+      const snap = await getDoc(doc(db, "inscripciones_eurus", decodedText));
+      if (!snap.exists()) {
+        alerta("error", "QR no reconocido. Participante no encontrado.");
+        qrDetectado = false;
+        _capturando = false;
+        await iniciarCamara();
+        return;
+      }
+      const p = { id: decodedText, ...snap.data() };
+      dbg("OK", "✅ Participante: " + p.nombre);
+      if (p.eventoId !== eventoActivo.id) {
+        alerta("error", "Este QR pertenece a otro evento (" + (p.eventoNombre || "?") + ").");
+        qrDetectado = false;
+        _capturando = false;
+        await iniciarCamara();
+        return;
+      }
+      participanteSel = p;
+      mostrarInfoParticipante(p);
+    } catch (e) {
+      dbg("ERROR", "❌ Error buscando participante: " + (e.message || e));
+      alerta("error", "Error al buscar participante.");
+      qrDetectado = false;
+    }
+  } else {
+    dbg("WARN", "📸 QR no detectado (ambos métodos fallaron)");
+    alerta("error", "QR no detectado. Asegura buena luz, acerca la cámara y que el QR esté completo.");
+  }
+
+  _capturando = false;
+  if (!qrDetectado) {
+    await iniciarCamara();
   }
 });
 

@@ -366,8 +366,6 @@ async function capturarFoto() {
   if (_capturando) return;
   _capturando = true;
 
-  let tempScanner, tempDiv, mediaStream, videoEl;
-
   // Detener el scanner actual para liberar la cámara
   if (scanner) {
     try { await scanner.stop(); } catch (_) {}
@@ -379,100 +377,46 @@ async function capturarFoto() {
   el("btn-detener").style.display = "none";
   el("btn-capturar").style.display = "none";
 
+  dbg("INFO", "📸 Abriendo cámara nativa para foto...");
+  el("input-camera-native").value = "";
+  el("input-camera-native").click();
+}
+
+// ─── Escanear foto desde cámara nativa ───────────────────────────────────────
+el("input-camera-native").addEventListener("change", async e => {
+  const file = e.target.files[0];
+  if (!file) {
+    // Usuario canceló — reiniciar scanner
+    _capturando = false;
+    await iniciarCamara();
+    return;
+  }
+
+  dbg("INFO", "📸 Foto nativa: " + (file.size / 1024).toFixed(1) + "KB");
+  el("input-camera-native").value = "";
+
+  // Mostrar preview
+  const previewUrl = URL.createObjectURL(file);
+  el("capture-preview").src = previewUrl;
+  el("capture-preview-wrap").style.display = "block";
+
+  let tempScanner, tempDiv;
   try {
-    // Acceder a la cámara DIRECTAMENTE con mejor resolución
-    mediaStream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: usandoFrontal ? "user" : "environment",
-        width: { min: 1280, ideal: 2560 },
-        height: { min: 720, ideal: 1440 }
-      }
-    });
-
-    const track = mediaStream.getVideoTracks()[0];
-
-    // --- Capturar frame con la MEJOR calidad disponible ---
-    const canvas = el("capture-canvas");
-    let canvasW, canvasH;
-
-    if ("ImageCapture" in window) {
-      try {
-        const capture = new ImageCapture(track);
-        const bitmap = await capture.grabFrame();
-        canvasW = bitmap.width;
-        canvasH = bitmap.height;
-        canvas.width = canvasW;
-        canvas.height = canvasH;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(bitmap, 0, 0);
-        bitmap.close();
-        dbg("INFO", "📸 Frame vía ImageCapture: " + canvasW + "x" + canvasH);
-      } catch (e) {
-        dbg("WARN", "⚠️ ImageCapture falló, usando fallback video");
-        videoEl = null;
-      }
-    }
-
-    if (!canvasW) {
-      // Fallback: hidden video element
-      videoEl = document.createElement("video");
-      videoEl.srcObject = mediaStream;
-      videoEl.setAttribute("playsinline", "");
-      videoEl.muted = true;
-      videoEl.style.display = "none";
-      document.body.appendChild(videoEl);
-      await videoEl.play();
-
-      if (videoEl.readyState < 2) {
-        await new Promise(r => { videoEl.onloadeddata = r; });
-      }
-
-      // Esperar auto-enfoque de la cámara
-      await new Promise(r => setTimeout(r, 1800));
-
-      canvasW = videoEl.videoWidth || 1280;
-      canvasH = videoEl.videoHeight || 720;
-      canvas.width = canvasW;
-      canvas.height = canvasH;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(videoEl, 0, 0);
-      dbg("INFO", "📸 Frame vía video: " + canvasW + "x" + canvasH);
-    }
-
-    // Liberar stream directo
-    track.stop();
-    mediaStream.getTracks().forEach(t => t.stop());
-    mediaStream = null;
-    if (videoEl) { videoEl.remove(); videoEl = null; }
-
-    // PNG lossless para no perder bordes del QR
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
-    if (!blob) { throw new Error("No se pudo generar la imagen."); }
-    const kb = (blob.size / 1024).toFixed(1);
-    dbg("INFO", "📸 Captura: " + canvasW + "x" + canvasH + " (" + kb + "KB PNG)");
-
-    // Mostrar vista previa de lo que se capturó
-    el("capture-preview").src = URL.createObjectURL(blob);
-    el("capture-preview-wrap").style.display = "block";
-
-    // Escanear con scanFileV2 (showImage = false para no renderizar en hidden div)
-    const file = new File([blob], "captura.png", { type: "image/png" });
     tempDiv = document.createElement("div");
-    tempDiv.id = "temp-scanner-" + Date.now();
+    tempDiv.id = "temp-native-" + Date.now();
     tempDiv.style.display = "none";
     document.body.appendChild(tempDiv);
     tempScanner = new Html5Qrcode(tempDiv.id);
     const result = await Promise.race([
       tempScanner.scanFileV2(file, false),
-      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout escaneo")), 12000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 12000))
     ]);
-    dbg("DETECT", "🎯 QR detectado en foto: " + result.decodedText);
     tempScanner.clear();
     tempDiv.remove();
     tempScanner = null;
     tempDiv = null;
 
-    // Procesar el resultado (ruta directa, sin onScanExito)
+    dbg("DETECT", "🎯 QR detectado: " + result.decodedText);
     const inscripcionId = result.decodedText;
     qrDetectado = true;
 
@@ -480,15 +424,19 @@ async function capturarFoto() {
     if (!snap.exists()) {
       alerta("error", "QR no reconocido. Participante no encontrado.");
       qrDetectado = false;
+      _capturando = false;
+      await iniciarCamara();
       return;
     }
 
     const p = { id: inscripcionId, ...snap.data() };
-    console.log("[QR] Participante:", p.nombre, p.correo);
+    dbg("OK", "✅ Participante: " + p.nombre);
 
     if (p.eventoId !== eventoActivo.id) {
-      alerta("error", `Este QR pertenece a otro evento (${p.eventoNombre || "desconocido"}).`);
+      alerta("error", "Este QR pertenece a otro evento (" + (p.eventoNombre || "?") + ").");
       qrDetectado = false;
+      _capturando = false;
+      await iniciarCamara();
       return;
     }
 
@@ -499,24 +447,20 @@ async function capturarFoto() {
     if (tempDiv && tempDiv.parentNode) tempDiv.remove();
     const errMsg = (typeof e === "string") ? e : (e?.message || "");
     if (errMsg.includes("No MultiFormat Readers")) {
-      dbg("WARN", "📸 QR no detectado en la foto capturada");
-      alerta("error", "QR no detectado. Prueba con 'Escanear desde imagen' o captura de pantalla.");
+      dbg("WARN", "📸 QR no detectado en la foto");
+      alerta("error", "QR no detectado. Asegura buena luz y que el QR se vea completo.");
     } else {
-      console.error("[QR] Error en capturarFoto:", e);
-      dbg("ERROR", "❌ Error capturar: " + (e.message || e));
-      alerta("error", "Error al capturar: " + (e.message || e));
+      console.error("[QR] Error escaneando foto:", e);
+      dbg("ERROR", "❌ Error escaneando: " + (e.message || e));
+      alerta("error", "Error al escanear: " + (e.message || e));
     }
   } finally {
     _capturando = false;
-    // Limpiar cualquier stream residual
-    if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
-    if (videoEl && videoEl.parentNode) videoEl.remove();
-    // Si no hay resultado abierto, reiniciar el scanner
     if (!qrDetectado) {
       await iniciarCamara();
     }
   }
-}
+});
 
 // ─── Esperar rol ──────────────────────────────────────────────────────────────
 async function esperarRol() {

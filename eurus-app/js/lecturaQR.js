@@ -75,8 +75,12 @@ async function iniciarCamara() {
   }
   console.log("[QR] Cámaras disponibles:", camarasCache.map(c => c.label));
 
-  const camaraId = camarasCache[0].id;
-  const camaraLabel = camarasCache[0].label;
+  const trasera = camarasCache.find(c => {
+    const lbl = c.label.toLowerCase();
+    return lbl.includes("back") || lbl.includes("environment") || lbl.includes("rear") || lbl.includes("trasera");
+  });
+  const camaraId = trasera ? trasera.id : camarasCache[0].id;
+  const camaraLabel = trasera ? trasera.label : camarasCache[0].label;
   console.log("[QR] Usando cámara:", camaraLabel);
 
   if (scanner) { try { await scanner.clear(); } catch (_) {} }
@@ -335,9 +339,9 @@ async function capturarFoto() {
   el("btn-capturar").style.display = "none";
 
   try {
-    // Acceder a la cámara DIRECTAMENTE con mejor resolución
+    // Acceder a la cámara DIRECTAMENTE con mejor resolución (priorizar trasera)
     mediaStream = await navigator.mediaDevices.getUserMedia({
-      video: { width: { ideal: 1920 }, height: { ideal: 1080 } }
+      video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }
     });
 
     const track = mediaStream.getVideoTracks()[0];

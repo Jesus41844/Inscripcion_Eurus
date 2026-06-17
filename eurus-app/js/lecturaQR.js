@@ -27,9 +27,12 @@ function alerta(tipo, msg) {
 
 // ─── Cargar eventos ──────────────────────────────────────────────────────────
 async function cargarEventos() {
+  dbg("INFO", "📋 Cargando eventos desde Firestore...");
   try {
     const snap = await getDocs(query(collection(db, "eventos_eurus"), orderBy("creadoEn", "desc")));
+    dbg("INFO", "📋 Eventos recibidos: " + snap.docs.length);
     const sel  = el("sel-evento-qr");
+    sel.innerHTML = '<option value="">— Selecciona un evento —</option>';
     snap.docs.forEach(d => {
       const ev  = d.data();
       const opt = document.createElement("option");
@@ -37,9 +40,12 @@ async function cargarEventos() {
       opt.textContent = ev.nombre;
       sel.appendChild(opt);
     });
+    if (snap.docs.length === 0) {
+      dbg("WARN", "⚠️ No hay eventos en la BD");
+    }
   } catch (e) {
     console.error("[QR] Error al cargar eventos:", e);
-    dbg("ERROR", "❌ Error al cargar eventos: " + e.message);
+    dbg("ERROR", "❌ Error al cargar eventos: " + (e.message || e));
     alerta("error", "Error al cargar eventos. Verifica conexión.");
   }
 }
@@ -495,8 +501,15 @@ async function esperarRol() {
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
-dbg("INFO", "📱 App iniciada — esperando selección de evento y cámara");
+dbg("INFO", "📱 App iniciada — cargando eventos y verificando permisos");
+
+// 1) Cargar eventos siempre (no depende de auth)
+cargarEventos();
+
+// 2) Verificar permisos (redirige si no tiene acceso, sin bloquear la carga)
 esperarRol().then(ok => {
-  if (!ok) { window.location.href = "dashboard.html"; return; }
-  cargarEventos();
+  if (!ok) {
+    dbg("ERROR", "❌ Sin permisos — redirigiendo a dashboard");
+    window.location.href = "dashboard.html";
+  }
 });

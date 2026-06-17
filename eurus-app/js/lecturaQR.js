@@ -359,17 +359,20 @@ el("input-scan-file").addEventListener("change", async e => {
 // ─── Capturar foto desde cámara ─────────────────────────────────────────────
 el("btn-capturar").addEventListener("click", capturarFoto);
 
-async function capturarFoto() {
+function capturarFoto() {
   if (!scanner || !escaneando) return;
   if (!checkpointSel) { alerta("error", "Selecciona un checkpoint."); return; }
   if (el("resultado-box").style.display === "block") return;
   if (_capturando) return;
   _capturando = true;
 
-  // Detener el scanner actual para liberar la cámara
+  // 1) Click file input INMEDIATAMENTE (dentro del gesto del usuario)
+  el("input-camera-native").value = "";
+  el("input-camera-native").click();
+
+  // 2) Liberar scanner en background (no await — el gesto ya se usó)
   if (scanner) {
-    try { await scanner.stop(); } catch (_) {}
-    try { await scanner.clear(); } catch (_) {}
+    scanner.stop().catch(() => {}).then(() => scanner.clear().catch(() => {}));
     scanner = null;
   }
   escaneando = false;
@@ -377,9 +380,7 @@ async function capturarFoto() {
   el("btn-detener").style.display = "none";
   el("btn-capturar").style.display = "none";
 
-  dbg("INFO", "📸 Abriendo cámara nativa para foto...");
-  el("input-camera-native").value = "";
-  el("input-camera-native").click();
+  setTimeout(() => dbg("INFO", "📸 Cámara nativa abierta"), 200);
 }
 
 // ─── Escanear foto desde cámara nativa ───────────────────────────────────────

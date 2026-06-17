@@ -6,15 +6,14 @@ import {
 
 const el = id => document.getElementById(id);
 
-let scanner           = null;
-let escaneando        = false;
-let eventoActivo      = null;
-let checkpointSel     = null;
-let participanteSel   = null;
-let logSesion         = [];
-let qrDetectado       = false;
-let camarasCache      = [];
-let camaraIndexActual = 0;
+let scanner         = null;
+let escaneando      = false;
+let eventoActivo    = null;
+let checkpointSel   = null;
+let participanteSel = null;
+let logSesion       = [];
+let qrDetectado     = false;
+let usandoFrontal   = true;
 
 // ─── Alerta ──────────────────────────────────────────────────────────────────
 function alerta(tipo, msg) {
@@ -64,41 +63,49 @@ window.seleccionarCP = function(card) {
   el("cp-seleccionado").textContent = `Checkpoint activo: ${checkpointSel.nombre}`;
 };
 
+function dbg(type, msg) {
+  console.log("[" + type + "]", msg);
+  if (window.debugLog) window.debugLog(type, msg);
+}
+
 // ─── Scanner ─────────────────────────────────────────────────────────────────
 async function iniciarCamara() {
   if (!eventoActivo) { alerta("error", "Selecciona un evento."); return; }
   if (!checkpointSel) { alerta("error", "Selecciona un checkpoint."); return; }
 
-  camarasCache = await Html5Qrcode.getCameras().catch(() => []);
-  if (!camarasCache.length) {
-    alerta("error", "No se encontró ninguna cámara en este dispositivo.");
-    return;
-  }
-  console.log("[QR] Cámaras disponibles:", camarasCache.map(c => c.label));
-
-  if (camaraIndexActual >= camarasCache.length) camaraIndexActual = 0;
-  const camara = camarasCache[camaraIndexActual];
-  console.log("[QR] Usando cámara:", camara.label);
+  const facingMode = usandoFrontal ? "user" : "environment";
+  dbg("INFO", "📷 Iniciando cámara " + (usandoFrontal ? "frontal" : "trasera"));
 
   if (scanner) { try { await scanner.clear(); } catch (_) {} }
   scanner = new Html5Qrcode("reader");
 
   try {
+    let frameCount = 0;
+    let lastDbgFrame = 0;
     await scanner.start(
-      { deviceId: camara.id },
-      { fps: 15, qrbox: { width: 300, height: 220 } },
+      { facingMode },
+      { fps: 20, useBarCodeDetectorIfSupported: true },
       onScanExito,
-      err => { if (err && !err.includes("No MultiFormat Readers")) console.warn("[QR] Error de frame:", err); }
+      err => {
+        frameCount++;
+        if (frameCount - lastDbgFrame >= 30) {
+          lastDbgFrame = frameCount;
+          dbg("SCAN", "🔍 Escaneando (" + frameCount + " frames)");
+        }
+        if (err && !err.includes("No MultiFormat Readers")) console.warn("[QR] Error de frame:", err);
+      }
     );
     escaneando = true;
     el("btn-iniciar").style.display = "none";
     el("btn-detener").style.display = "inline-flex";
     el("btn-capturar").style.display = "inline-flex";
-    el("btn-cambiar-camara").style.display = camarasCache.length > 1 ? "inline-flex" : "none";
+    el("btn-cambiar-camara").style.display = "inline-flex";
     el("scanner-activo").classList.add("activo");
+    dbg("OK", "✅ Cámara iniciada correctamente");
   } catch (e) {
     console.error("[QR] Error al iniciar cámara:", e);
-    alerta("error", "No se pudo acceder a la cámara (" + camara.label + "): " + e.message + ". Asegúrate de haber dado permiso de cámara en el navegador.");
+    dbg("ERROR", "❌ Error cámara: " + e.message);
+    alerta("error", "No se pudo iniciar la cámara " + (usandoFrontal ? "frontal" : "trasera") + ": " + e.message);
   }
 }
 
@@ -116,12 +123,12 @@ async function detenerCamara() {
   el("btn-capturar").style.display = "none";
   el("btn-cambiar-camara").style.display = "none";
   el("scanner-activo").classList.remove("activo");
+  dbg("INFO", "⏹ Cámara detenida");
 }
 
 el("btn-detener").addEventListener("click", detenerCamara);
 
 async function cambiarCamara() {
-  if (!camarasCache.length || camarasCache.length < 2) return;
   if (scanner) {
     try { await scanner.clear(); } catch (_) {}
     scanner = null;
@@ -130,8 +137,8 @@ async function cambiarCamara() {
   el("btn-capturar").style.display = "none";
   el("btn-cambiar-camara").style.display = "none";
 
-  camaraIndexActual = (camaraIndexActual + 1) % camarasCache.length;
-  console.log("[QR] Cambiando a cámara:", camarasCache[camaraIndexActual].label);
+  usandoFrontal = !usandoFrontal;
+  dbg("INFO", "🔄 Cambiando a cámara " + (usandoFrontal ? "frontal" : "trasera"));
   await iniciarCamara();
 }
 
@@ -146,7 +153,7 @@ async function onScanExito(inscripcionId) {
   }
   if (el("resultado-box").style.display === "block") return;
 
-  console.log("[QR] QR detectado! ID:", inscripcionId);
+  dbg("DETECT", "🎯 QR detectado! ID: " + inscripcionId);
   qrDetectado = true;
 
   try {
@@ -154,17 +161,17 @@ async function onScanExito(inscripcionId) {
 
     const snap = await getDoc(doc(db, "inscripciones_eurus", inscripcionId));
     if (!snap.exists()) {
-      console.warn("[QR] Participante no encontrado en Firestore:", inscripcionId);
+      dbg("WARN", "⚠️ Participante NO encontrado en BD: " + inscripcionId);
       alerta("error", "QR no reconocido. Participante no encontrado.");
       await scanner.resume();
       return;
     }
 
     const p = { id: inscripcionId, ...snap.data() };
-    console.log("[QR] Participante:", p.nombre, p.correo);
+    dbg("OK", "✅ Participante encontrado: " + p.nombre);
 
     if (p.eventoId !== eventoActivo.id) {
-      console.warn("[QR] Evento no coincide. QR:", p.eventoNombre, "Activo:", eventoActivo.nombre);
+      dbg("WARN", "⚠️ QR de otro evento: " + (p.eventoNombre || "?"));
       alerta("error", `Este QR pertenece a otro evento (${p.eventoNombre || "desconocido"}).`);
       await scanner.resume();
       return;
@@ -174,6 +181,7 @@ async function onScanExito(inscripcionId) {
     mostrarInfoParticipante(p);
   } catch (e) {
     console.error("[QR] Error al procesar escaneo:", e);
+    dbg("ERROR", "❌ Error al procesar QR: " + e.message);
     alerta("error", "Error al procesar QR. Intenta de nuevo.");
     if (scanner && escaneando) await scanner.resume();
   }
@@ -248,6 +256,7 @@ el("btn-confirmar-asistencia").addEventListener("click", async () => {
       hora:       ahora.toLocaleTimeString("es-PA"),
     });
     renderLog();
+    dbg("OK", "✅ Asistencia guardada: " + participanteSel.nombre + " en " + checkpointSel.nombre);
     alerta("success", `✅ Asistencia confirmada: ${participanteSel.nombre}`);
 
     // Marcar visualmente el checkpoint como ya marcado para esta persona
@@ -355,16 +364,16 @@ async function capturarFoto() {
   el("btn-capturar").style.display = "none";
 
   try {
-    // Acceder a la cámara DIRECTAMENTE con mejor resolución (priorizar trasera)
+    // Acceder a la cámara DIRECTAMENTE con mejor resolución
     mediaStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }
+      video: { facingMode: usandoFrontal ? "user" : "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }
     });
 
     const track = mediaStream.getVideoTracks()[0];
     const settings = track.getSettings();
     const resW = settings.width  || 1280;
     const resH = settings.height || 720;
-    console.log("[QR] Cámara directa:", resW + "x" + resH);
+    dbg("INFO", "📸 Foto a " + resW + "x" + resH);
 
     videoEl = document.createElement("video");
     videoEl.srcObject = mediaStream;
@@ -407,7 +416,7 @@ async function capturarFoto() {
     document.body.appendChild(tempDiv);
     tempScanner = new Html5Qrcode(tempDiv.id);
     const result = await tempScanner.scanFileV2(file, true);
-    console.log("[QR] QR detectado en foto capturada:", result);
+    dbg("DETECT", "🎯 QR detectado en foto: " + result.decodedText);
     tempScanner.clear();
     tempDiv.remove();
     tempScanner = null;
@@ -439,9 +448,11 @@ async function capturarFoto() {
     if (tempScanner) { try { tempScanner.clear(); } catch (_) {} }
     if (tempDiv && tempDiv.parentNode) tempDiv.remove();
     if (e.includes && e.includes("No MultiFormat Readers")) {
+      dbg("WARN", "📸 QR no detectado en la foto capturada");
       alerta("error", "El QR no se ve claro. Acerca el teléfono, asegura buena luz y presiona 'Capturar'.");
     } else {
       console.error("[QR] Error en capturarFoto:", e);
+      dbg("ERROR", "❌ Error capturar: " + (e.message || e));
       alerta("error", "Error al capturar: " + (e.message || e));
     }
   } finally {
@@ -456,4 +467,5 @@ async function capturarFoto() {
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
+dbg("INFO", "📱 App iniciada — esperando selección de evento y cámara");
 cargarEventos();

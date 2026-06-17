@@ -151,5 +151,70 @@
 </div>
 
 <script type="module" src="js/lecturaQR.js"></script>
+<div id="debug-panel">
+  <button id="debug-toggle" title="Abrir panel de depuración">🐛</button>
+  <div id="debug-body" style="display:none;">
+    <div id="debug-title">Panel de depuración</div>
+    <div id="debug-logs"></div>
+  </div>
+</div>
+
+<style>
+#debug-panel {
+  position: fixed; bottom: 12px; right: 12px; z-index: 9999;
+  font-family: monospace; font-size: 11px; line-height: 1.4;
+}
+#debug-toggle {
+  background: var(--eurus-medio); color: #fff; border: none;
+  border-radius: 50%; width: 40px; height: 40px; cursor: pointer;
+  font-size: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  float: right;
+}
+#debug-body {
+  clear: both; margin-top: 4px;
+  background: rgba(0,0,0,0.85); color: #fff;
+  border-radius: 8px; padding: 8px;
+  width: 320px; max-height: 300px;
+  overflow-y: auto;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+#debug-title { font-weight: 700; font-size: 12px; margin-bottom: 6px; color: #8cf; }
+#debug-logs { display: flex; flex-direction: column; gap: 2px; }
+.dbg-entry { padding: 2px 4px; border-radius: 3px; word-break: break-all; }
+.dbg-time { color: #888; margin-right: 4px; }
+.dbg-INFO  { color: #aac; }
+.dbg-OK    { color: #4c4; }
+.dbg-WARN  { color: #fa0; }
+.dbg-ERROR { color: #f44; }
+.dbg-SCAN  { color: #8cf; }
+.dbg-DETECT{ color: #0f0; font-weight: 700; }
+</style>
+
+<script>
+// Debug logger: visible en pantalla y en consola
+(function() {
+  const logs = document.getElementById("debug-logs");
+  const toggle = document.getElementById("debug-toggle");
+  const body = document.getElementById("debug-body");
+  let visible = false;
+
+  toggle.addEventListener("click", () => {
+    visible = !visible;
+    body.style.display = visible ? "block" : "none";
+    toggle.textContent = visible ? "✕" : "🐛";
+  });
+
+  window.debugLog = function(type, msg) {
+    const time = new Date().toLocaleTimeString("es-PA");
+    const div = document.createElement("div");
+    div.className = "dbg-entry dbg-" + type;
+    div.innerHTML = `<span class="dbg-time">${time}</span> ${msg}`;
+    logs.appendChild(div);
+    if (logs.children.length > 30) logs.removeChild(logs.firstChild);
+    logs.scrollTop = logs.scrollHeight;
+  };
+})();
+</script>
+
 </body>
 </html>

@@ -6,14 +6,15 @@ import {
 
 const el = id => document.getElementById(id);
 
-let scanner         = null;
-let escaneando      = false;
-let eventoActivo    = null;
-let checkpointSel   = null;
-let participanteSel = null;
-let logSesion       = [];
-let qrDetectado     = false;
-let camarasCache    = [];
+let scanner           = null;
+let escaneando        = false;
+let eventoActivo      = null;
+let checkpointSel     = null;
+let participanteSel   = null;
+let logSesion         = [];
+let qrDetectado       = false;
+let camarasCache      = [];
+let camaraIndexActual = 0;
 
 // ─── Alerta ──────────────────────────────────────────────────────────────────
 function alerta(tipo, msg) {
@@ -75,20 +76,16 @@ async function iniciarCamara() {
   }
   console.log("[QR] Cámaras disponibles:", camarasCache.map(c => c.label));
 
-  const trasera = camarasCache.find(c => {
-    const lbl = c.label.toLowerCase();
-    return lbl.includes("back") || lbl.includes("environment") || lbl.includes("rear") || lbl.includes("trasera");
-  });
-  const camaraId = trasera ? trasera.id : camarasCache[0].id;
-  const camaraLabel = trasera ? trasera.label : camarasCache[0].label;
-  console.log("[QR] Usando cámara:", camaraLabel);
+  if (camaraIndexActual >= camarasCache.length) camaraIndexActual = 0;
+  const camara = camarasCache[camaraIndexActual];
+  console.log("[QR] Usando cámara:", camara.label);
 
   if (scanner) { try { await scanner.clear(); } catch (_) {} }
   scanner = new Html5Qrcode("reader");
 
   try {
     await scanner.start(
-      { deviceId: camaraId },
+      { deviceId: camara.id },
       { fps: 15, qrbox: { width: 300, height: 220 } },
       onScanExito,
       err => { if (err && !err.includes("No MultiFormat Readers")) console.warn("[QR] Error de frame:", err); }
@@ -97,10 +94,11 @@ async function iniciarCamara() {
     el("btn-iniciar").style.display = "none";
     el("btn-detener").style.display = "inline-flex";
     el("btn-capturar").style.display = "inline-flex";
+    el("btn-cambiar-camara").style.display = camarasCache.length > 1 ? "inline-flex" : "none";
     el("scanner-activo").classList.add("activo");
   } catch (e) {
     console.error("[QR] Error al iniciar cámara:", e);
-    alerta("error", "No se pudo acceder a la cámara (" + camaraLabel + "): " + e.message + ". Asegúrate de haber dado permiso de cámara en el navegador.");
+    alerta("error", "No se pudo acceder a la cámara (" + camara.label + "): " + e.message + ". Asegúrate de haber dado permiso de cámara en el navegador.");
   }
 }
 
@@ -116,10 +114,28 @@ async function detenerCamara() {
   el("btn-iniciar").style.display = "inline-flex";
   el("btn-detener").style.display = "none";
   el("btn-capturar").style.display = "none";
+  el("btn-cambiar-camara").style.display = "none";
   el("scanner-activo").classList.remove("activo");
 }
 
 el("btn-detener").addEventListener("click", detenerCamara);
+
+async function cambiarCamara() {
+  if (!camarasCache.length || camarasCache.length < 2) return;
+  if (scanner) {
+    try { await scanner.clear(); } catch (_) {}
+    scanner = null;
+  }
+  escaneando = false;
+  el("btn-capturar").style.display = "none";
+  el("btn-cambiar-camara").style.display = "none";
+
+  camaraIndexActual = (camaraIndexActual + 1) % camarasCache.length;
+  console.log("[QR] Cambiando a cámara:", camarasCache[camaraIndexActual].label);
+  await iniciarCamara();
+}
+
+el("btn-cambiar-camara").addEventListener("click", cambiarCamara);
 
 // ─── Escaneo exitoso ─────────────────────────────────────────────────────────
 async function onScanExito(inscripcionId) {

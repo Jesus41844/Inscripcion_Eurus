@@ -3,6 +3,7 @@ import {
   collection, doc, getDoc, getDocs, updateDoc,
   query, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+import { tienePermiso } from "./auth.js";
 
 const el = id => document.getElementById(id);
 
@@ -14,6 +15,7 @@ let participanteSel = null;
 let logSesion       = [];
 let qrDetectado     = false;
 let usandoFrontal   = true;
+let _capturando     = false;
 
 // ─── Alerta ──────────────────────────────────────────────────────────────────
 function alerta(tipo, msg) {
@@ -349,6 +351,8 @@ async function capturarFoto() {
   if (!scanner || !escaneando) return;
   if (!checkpointSel) { alerta("error", "Selecciona un checkpoint."); return; }
   if (el("resultado-box").style.display === "block") return;
+  if (_capturando) return;
+  _capturando = true;
 
   let tempScanner, tempDiv, mediaStream, videoEl;
 
@@ -383,7 +387,9 @@ async function capturarFoto() {
     await videoEl.play();
 
     // Esperar que el video tenga datos
-    await new Promise(r => { videoEl.onloadeddata = r; });
+    if (videoEl.readyState < 2) {
+      await new Promise(r => { videoEl.onloadeddata = r; });
+    }
     await new Promise(r => setTimeout(r, 400));
 
     // Capturar frame al canvas
@@ -415,7 +421,10 @@ async function capturarFoto() {
     tempDiv.style.display = "none";
     document.body.appendChild(tempDiv);
     tempScanner = new Html5Qrcode(tempDiv.id);
-    const result = await tempScanner.scanFileV2(file, true);
+    const result = await Promise.race([
+      tempScanner.scanFileV2(file, true),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout escaneo")), 12000))
+    ]);
     dbg("DETECT", "🎯 QR detectado en foto: " + result.decodedText);
     tempScanner.clear();
     tempDiv.remove();
@@ -447,7 +456,8 @@ async function capturarFoto() {
   } catch (e) {
     if (tempScanner) { try { tempScanner.clear(); } catch (_) {} }
     if (tempDiv && tempDiv.parentNode) tempDiv.remove();
-    if (e.includes && e.includes("No MultiFormat Readers")) {
+    const errMsg = (typeof e === "string") ? e : (e?.message || "");
+    if (errMsg.includes("No MultiFormat Readers")) {
       dbg("WARN", "📸 QR no detectado en la foto capturada");
       alerta("error", "El QR no se ve claro. Acerca el teléfono, asegura buena luz y presiona 'Capturar'.");
     } else {
@@ -456,6 +466,7 @@ async function capturarFoto() {
       alerta("error", "Error al capturar: " + (e.message || e));
     }
   } finally {
+    _capturando = false;
     // Limpiar cualquier stream residual
     if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
     if (videoEl && videoEl.parentNode) videoEl.remove();
@@ -466,6 +477,19 @@ async function capturarFoto() {
   }
 }
 
+// ─── Esperar rol ──────────────────────────────────────────────────────────────
+async function esperarRol() {
+  for (let i = 0; i < 15; i++) {
+    const rol = sessionStorage.getItem("rol");
+    if (rol && tienePermiso(rol, "gestionar_inscripciones")) return true;
+    await new Promise(r => setTimeout(r, 200));
+  }
+  return false;
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 dbg("INFO", "📱 App iniciada — esperando selección de evento y cámara");
+esperarRol().then(ok => {
+  if (!ok) { window.location.href = "dashboard.html"; return; }
+});
 cargarEventos();

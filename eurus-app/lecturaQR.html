@@ -8,9 +8,8 @@
   <script src="js/libs/html5-qrcode.min.js"></script>
   <script src="js/libs/qrcode.min.js"></script>
   <script type="module">
-    import { guardRoute, requirePermiso } from "./js/auth.js";
+    import { guardRoute } from "./js/auth.js";
     guardRoute();
-    requirePermiso("gestionar_inscripciones");
   </script>
   <style>
     /* ── Paleta EURUS: azul oscuro ── */
@@ -193,26 +192,31 @@
 <script>
 // Debug logger: visible en pantalla y en consola
 (function() {
-  const logs = document.getElementById("debug-logs");
-  const toggle = document.getElementById("debug-toggle");
-  const body = document.getElementById("debug-body");
-  let visible = false;
+  try {
+    const logs = document.getElementById("debug-logs");
+    const toggle = document.getElementById("debug-toggle");
+    const body = document.getElementById("debug-body");
+    if (!logs || !toggle || !body) { console.warn("[Debug] Elementos no encontrados"); return; }
+    let visible = false;
 
-  toggle.addEventListener("click", () => {
-    visible = !visible;
-    body.style.display = visible ? "block" : "none";
-    toggle.textContent = visible ? "✕" : "🐛";
-  });
+    toggle.addEventListener("click", () => {
+      visible = !visible;
+      body.style.display = visible ? "block" : "none";
+      toggle.textContent = visible ? "✕" : "🐛";
+    });
 
-  window.debugLog = function(type, msg) {
-    const time = new Date().toLocaleTimeString("es-PA");
-    const div = document.createElement("div");
-    div.className = "dbg-entry dbg-" + type;
-    div.innerHTML = `<span class="dbg-time">${time}</span> ${msg}`;
-    logs.appendChild(div);
-    if (logs.children.length > 30) logs.removeChild(logs.firstChild);
-    logs.scrollTop = logs.scrollHeight;
-  };
+    window.debugLog = function(type, msg) {
+      try {
+        const time = new Date().toLocaleTimeString("es-PA");
+        const div = document.createElement("div");
+        div.className = "dbg-entry dbg-" + type;
+        div.innerHTML = `<span class="dbg-time">${time}</span> ${msg}`;
+        logs.appendChild(div);
+        if (logs.children.length > 30) logs.removeChild(logs.firstChild);
+        logs.scrollTop = logs.scrollHeight;
+      } catch (e) { console.warn("[Debug] Error en log:", e); }
+    };
+  } catch (e) { console.warn("[Debug] Error init:", e); }
 })();
 </script>
 

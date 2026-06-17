@@ -382,59 +382,88 @@ async function capturarFoto() {
   try {
     // Acceder a la cámara DIRECTAMENTE con mejor resolución
     mediaStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: usandoFrontal ? "user" : "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }
+      video: {
+        facingMode: usandoFrontal ? "user" : "environment",
+        width: { min: 1280, ideal: 2560 },
+        height: { min: 720, ideal: 1440 }
+      }
     });
 
     const track = mediaStream.getVideoTracks()[0];
-    const settings = track.getSettings();
-    const resW = settings.width  || 1280;
-    const resH = settings.height || 720;
-    dbg("INFO", "📸 Foto a " + resW + "x" + resH);
 
-    videoEl = document.createElement("video");
-    videoEl.srcObject = mediaStream;
-    videoEl.setAttribute("playsinline", "");
-    videoEl.style.display = "none";
-    document.body.appendChild(videoEl);
-    await videoEl.play();
-
-    // Esperar que el video tenga datos
-    if (videoEl.readyState < 2) {
-      await new Promise(r => { videoEl.onloadeddata = r; });
-    }
-    await new Promise(r => setTimeout(r, 400));
-
-    // Capturar frame al canvas
+    // --- Capturar frame con la MEJOR calidad disponible ---
     const canvas = el("capture-canvas");
-    canvas.width  = resW;
-    canvas.height = resH;
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(videoEl, 0, 0);
+    let canvasW, canvasH;
+
+    if ("ImageCapture" in window) {
+      try {
+        const capture = new ImageCapture(track);
+        const bitmap = await capture.grabFrame();
+        canvasW = bitmap.width;
+        canvasH = bitmap.height;
+        canvas.width = canvasW;
+        canvas.height = canvasH;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(bitmap, 0, 0);
+        bitmap.close();
+        dbg("INFO", "📸 Frame vía ImageCapture: " + canvasW + "x" + canvasH);
+      } catch (e) {
+        dbg("WARN", "⚠️ ImageCapture falló, usando fallback video");
+        videoEl = null;
+      }
+    }
+
+    if (!canvasW) {
+      // Fallback: hidden video element
+      videoEl = document.createElement("video");
+      videoEl.srcObject = mediaStream;
+      videoEl.setAttribute("playsinline", "");
+      videoEl.muted = true;
+      videoEl.style.display = "none";
+      document.body.appendChild(videoEl);
+      await videoEl.play();
+
+      if (videoEl.readyState < 2) {
+        await new Promise(r => { videoEl.onloadeddata = r; });
+      }
+
+      // Esperar auto-enfoque de la cámara
+      await new Promise(r => setTimeout(r, 1800));
+
+      canvasW = videoEl.videoWidth || 1280;
+      canvasH = videoEl.videoHeight || 720;
+      canvas.width = canvasW;
+      canvas.height = canvasH;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(videoEl, 0, 0);
+      dbg("INFO", "📸 Frame vía video: " + canvasW + "x" + canvasH);
+    }
 
     // Liberar stream directo
     track.stop();
     mediaStream.getTracks().forEach(t => t.stop());
     mediaStream = null;
-    videoEl.remove();
-    videoEl = null;
+    if (videoEl) { videoEl.remove(); videoEl = null; }
 
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.95));
+    // PNG lossless para no perder bordes del QR
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
     if (!blob) { throw new Error("No se pudo generar la imagen."); }
-    console.log(`[QR] Foto capturada: ${canvas.width}x${canvas.height}, tamaño: ${(blob.size / 1024).toFixed(1)}KB`);
+    const kb = (blob.size / 1024).toFixed(1);
+    dbg("INFO", "📸 Captura: " + canvasW + "x" + canvasH + " (" + kb + "KB PNG)");
 
     // Mostrar vista previa de lo que se capturó
     el("capture-preview").src = URL.createObjectURL(blob);
     el("capture-preview-wrap").style.display = "block";
 
-    // Escanear con scanFileV2
-    const file = new File([blob], "captura.jpg", { type: "image/jpeg" });
+    // Escanear con scanFileV2 (showImage = false para no renderizar en hidden div)
+    const file = new File([blob], "captura.png", { type: "image/png" });
     tempDiv = document.createElement("div");
     tempDiv.id = "temp-scanner-" + Date.now();
     tempDiv.style.display = "none";
     document.body.appendChild(tempDiv);
     tempScanner = new Html5Qrcode(tempDiv.id);
     const result = await Promise.race([
-      tempScanner.scanFileV2(file, true),
+      tempScanner.scanFileV2(file, false),
       new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout escaneo")), 12000))
     ]);
     dbg("DETECT", "🎯 QR detectado en foto: " + result.decodedText);
@@ -471,7 +500,7 @@ async function capturarFoto() {
     const errMsg = (typeof e === "string") ? e : (e?.message || "");
     if (errMsg.includes("No MultiFormat Readers")) {
       dbg("WARN", "📸 QR no detectado en la foto capturada");
-      alerta("error", "El QR no se ve claro. Acerca el teléfono, asegura buena luz y presiona 'Capturar'.");
+      alerta("error", "QR no detectado. Prueba con 'Escanear desde imagen' o captura de pantalla.");
     } else {
       console.error("[QR] Error en capturarFoto:", e);
       dbg("ERROR", "❌ Error capturar: " + (e.message || e));

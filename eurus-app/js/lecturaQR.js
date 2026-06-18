@@ -358,10 +358,11 @@ el("input-scan-file").addEventListener("change", async e => {
 
 // ─── Capturar foto desde cámara ─────────────────────────────────────────────
 async function capturarFoto() {
-  if (!scanner || !escaneando) return;
+  dbg("SCAN", "🔍 capturarFoto() llamada — scanner=" + !!scanner + " escaneando=" + escaneando);
+  if (!scanner || !escaneando) { dbg("ERROR", "❌ capturarFoto: scanner inactivo"); return; }
   if (!checkpointSel) { alerta("error", "Selecciona un checkpoint."); return; }
-  if (el("resultado-box").style.display === "block") return;
-  if (_capturando) return;
+  if (el("resultado-box").style.display === "block") { dbg("WARN", "⚠️ resultado-box ya visible"); return; }
+  if (_capturando) { dbg("WARN", "⚠️ ya capturando"); return; }
   _capturando = true;
 
   try {
@@ -376,12 +377,13 @@ async function capturarFoto() {
     el("btn-detener").style.display = "none";
     el("btn-cambiar-camara").style.display = "none";
 
-    dbg("INFO", "📸 Abriendo cámara para capturar frame...");
+    dbg("INFO", "📸 Abriendo cámara para capturar frame (facingMode: environment)...");
 
     // 2. Abrir stream rápido, tomar 1 frame y cerrar
     const stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }
     });
+    dbg("INFO", "📸 Stream abierto correctamente");
 
     const video = document.createElement("video");
     video.srcObject = stream;
@@ -396,7 +398,7 @@ async function capturarFoto() {
     stream.getTracks().forEach(t => t.stop());
     video.srcObject = null;
 
-    dbg("INFO", "📸 Frame: " + canvas.width + "x" + canvas.height);
+    dbg("INFO", "📸 Frame: " + canvas.width + "x" + canvas.height + " — stream cerrado");
 
     // Mostrar preview
     el("capture-preview").src = canvas.toDataURL("image/jpeg", 0.85);
@@ -406,9 +408,11 @@ async function capturarFoto() {
 
     // --- Método 1: BarcodeDetector nativo (canvas directo) ---
     if ('BarcodeDetector' in window) {
+      dbg("SCAN", "🔍 Ejecutando BarcodeDetector...");
       try {
         const detector = new BarcodeDetector({ formats: ['qr_code'] });
         const codes = await detector.detect(canvas);
+        dbg("SCAN", "🔍 BarcodeDetector devolvió " + codes.length + " códigos");
         if (codes.length > 0) {
           decodedText = codes[0].rawValue;
           dbg("DETECT", "🎯 QR vía BarcodeDetector: " + decodedText);
@@ -418,16 +422,19 @@ async function capturarFoto() {
       } catch (e) {
         dbg("WARN", "⚠️ BarcodeDetector falló: " + e.message);
       }
+    } else {
+      dbg("WARN", "⚠️ BarcodeDetector NO disponible en este navegador");
     }
 
     // --- Método 2: ZXing (scanFileV2) como fallback ---
     if (!decodedText) {
+      dbg("SCAN", "🔍 Ejecutando ZXing scanFileV2...");
       try {
         const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.9));
+        dbg("SCAN", "🔍 Blob creado: " + (blob.size / 1024).toFixed(1) + "KB");
         const tempId = "temp-qr-" + Date.now();
         const tempDiv = document.createElement("div");
         tempDiv.id = tempId;
-        tempDiv.style.display = "none";
         document.body.appendChild(tempDiv);
         const tempScanner = new Html5Qrcode(tempId);
         const r = await Promise.race([
@@ -440,10 +447,11 @@ async function capturarFoto() {
         document.body.removeChild(tempDiv);
       } catch (e) {
         const errMsg = (typeof e === "string") ? e : (e?.message || "");
+        dbg("SCAN", "🔍 ZXing catch: " + errMsg);
         if (errMsg.includes("No MultiFormat Readers")) {
           dbg("WARN", "⚠️ ZXing: QR no detectado (el QR puede estar borroso o mal alineado)");
         } else if (errMsg.includes("Timeout")) {
-          dbg("WARN", "⚠️ ZXing: timeout");
+          dbg("WARN", "⚠️ ZXing: timeout (15s)");
         } else {
           console.error("[QR] ZXing error:", e);
           dbg("ERROR", "❌ ZXing: " + errMsg);
@@ -452,6 +460,7 @@ async function capturarFoto() {
     }
 
     // --- Procesar resultado ---
+    dbg("SCAN", "🔍 decodedText final: " + (decodedText || "null"));
     if (decodedText) {
       qrDetectado = true;
       const snap = await getDoc(doc(db, "inscripciones_eurus", decodedText));
@@ -466,7 +475,9 @@ async function capturarFoto() {
           qrDetectado = false;
         } else {
           participanteSel = p;
+          dbg("SCAN", "🔍 Llamando mostrarInfoParticipante()...");
           mostrarInfoParticipante(p);
+          dbg("SCAN", "🔍 mostrarInfoParticipante() ejecutado");
         }
       }
     } else {

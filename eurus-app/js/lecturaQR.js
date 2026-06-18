@@ -364,23 +364,37 @@ async function capturarFoto() {
   if (_capturando) return;
   _capturando = true;
 
-  // Capturar un frame del video que ya está corriendo
   try {
-    const canvas = el("capture-canvas");
-    const video = document.querySelector("#reader video");
-    if (!video || !video.videoWidth) {
-      dbg("ERROR", "❌ No hay video activo");
-      _capturando = false;
-      return;
+    // 1. Detener scanner para liberar la cámara
+    if (scanner) {
+      try { await scanner.stop(); } catch (_) {}
+      try { await scanner.clear(); } catch (_) {}
+      scanner = null;
     }
+    escaneando = false;
+    el("btn-capturar").style.display = "none";
+    el("btn-detener").style.display = "none";
+    el("btn-cambiar-camara").style.display = "none";
 
-    // Pausar scanner momentáneamente
-    await scanner.pause();
+    dbg("INFO", "📸 Abriendo cámara para capturar frame...");
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    // 2. Abrir stream rápido, tomar 1 frame y cerrar
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }
+    });
+
+    const video = document.createElement("video");
+    video.srcObject = stream;
+    await video.play();
+
+    const canvas = el("capture-canvas");
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
     const ctx = canvas.getContext("2d");
     ctx.drawImage(video, 0, 0);
+
+    stream.getTracks().forEach(t => t.stop());
+    video.srcObject = null;
 
     dbg("INFO", "📸 Frame: " + canvas.width + "x" + canvas.height);
 
@@ -427,7 +441,7 @@ async function capturarFoto() {
       } catch (e) {
         const errMsg = (typeof e === "string") ? e : (e?.message || "");
         if (errMsg.includes("No MultiFormat Readers")) {
-          dbg("WARN", "⚠️ ZXing: QR no detectado");
+          dbg("WARN", "⚠️ ZXing: QR no detectado (el QR puede estar borroso o mal alineado)");
         } else if (errMsg.includes("Timeout")) {
           dbg("WARN", "⚠️ ZXing: timeout");
         } else {
@@ -456,19 +470,20 @@ async function capturarFoto() {
         }
       }
     } else {
-      alerta("error", "QR no detectado. Acerca la cámara y asegura buena luz.");
+      alerta("error", "QR no detectado. Espera un segundo y vuelve a intentar.");
     }
   } catch (e) {
     console.error("[QR] Error en capturarFoto:", e);
     dbg("ERROR", "❌ Error capturando: " + e.message);
-    alerta("error", "Error al capturar foto.");
+    alerta("error", "Error al capturar: " + e.message);
   }
 
   _capturando = false;
 
-  // Reanudar scanner si no se detectó QR
-  if (!qrDetectado && scanner && escaneando) {
-    try { await scanner.resume(); } catch (_) {}
+  // Si no se detectó QR, reiniciar la cámara
+  if (!qrDetectado) {
+    el("btn-iniciar").style.display = "inline-flex";
+    await iniciarCamara();
   }
 }
 

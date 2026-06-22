@@ -91,12 +91,15 @@ function renderCheckpoints() {
     </div>`).join("");
 }
 
-window.seleccionarCP = function(card) {
+window.seleccionarCP = async function(card) {
   if (card.classList.contains("ya-marcado")) return;
   document.querySelectorAll(".cp-card").forEach(c => c.classList.remove("selected"));
   card.classList.add("selected");
   checkpointSel = { id: card.dataset.id, nombre: card.dataset.nombre };
   el("cp-seleccionado").textContent = `Checkpoint activo: ${checkpointSel.nombre}`;
+  if (eventoActivo && !escaneando) {
+    await iniciarCamara();
+  }
 };
 
 function dbg(type, msg) {
@@ -184,7 +187,7 @@ async function onScanExito(inscripcionId) {
     alerta("error", "Selecciona un checkpoint antes de escanear.");
     return;
   }
-  if (el("resultado-box").style.display === "block") return;
+  if (el("resultado-box").classList.contains("open")) return;
 
   dbg("DETECT", "🎯 QR detectado! ID: " + inscripcionId);
   qrDetectado = true;
@@ -254,8 +257,7 @@ function mostrarInfoParticipante(p) {
     ? `Checkpoints previos (${marcados.length}/${totalCPs}): ${marcados.join(", ")}`
     : "Sin asistencias registradas aún.";
 
-  el("resultado-box").style.display = "block";
-  el("resultado-box").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  el("resultado-box").classList.add("open");
   console.log("[QR] Información mostrada para:", p.nombre);
 }
 
@@ -306,7 +308,7 @@ el("btn-cancelar-scan").addEventListener("click", cerrarResultado);
 async function cerrarResultado() {
   participanteSel = null;
   qrDetectado = false;
-  el("resultado-box").style.display = "none";
+  el("resultado-box").classList.remove("open");
   el("btn-confirmar-asistencia").disabled = false;
   el("btn-confirmar-asistencia").textContent = "✅ Confirmar asistencia";
   if (scanner && escaneando) {

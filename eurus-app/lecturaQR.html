@@ -2,9 +2,11 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EURUS — Lectura de QR</title>
-    <link rel="stylesheet" href="css/styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>EURUS — Scanner</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <script src="js/libs/html5-qrcode.min.js"></script>
     <script src="js/libs/qrcode.min.js"></script>
     <script type="module">
@@ -12,461 +14,878 @@
       guardRoute();
     </script>
     <style>
-      /* ── Paleta EURUS: azul oscuro ── */
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
       :root {
-        --eurus: #154360;
-        --eurus-medio: #1a5276;
-        --eurus-claro: #2471a3;
-        --eurus-fondo: #d6eaf8;
-        --eurus-sombra: rgba(21, 67, 96, 0.2);
+        --bg-deep:       #080b15;
+        --bg-body:       #0c101f;
+        --bg-card:       #111728;
+        --bg-elevated:   #182035;
+        --bg-hover:      #1f2a45;
+        --border-dim:    #1e2845;
+        --border-mid:    #2c3a60;
+        --cyan:          #00d4ff;
+        --cyan-glow:     rgba(0, 212, 255, 0.12);
+        --cyan-dim:      rgba(0, 212, 255, 0.06);
+        --green:         #00e676;
+        --green-dim:     rgba(0, 230, 118, 0.12);
+        --amber:         #ffc107;
+        --red:           #ff1744;
+        --red-dim:       rgba(255, 23, 68, 0.12);
+        --text-primary:  #e4e8f0;
+        --text-secondary:#8895b3;
+        --text-muted:    #4a5a7a;
+        --font-display:  'Syne', sans-serif;
+        --font-body:     'Outfit', sans-serif;
+        --font-mono:     'JetBrains Mono', monospace;
+        --ease-out:      cubic-bezier(0.22, 1, 0.36, 1);
+        --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);
+        --radius:        16px;
+        --radius-sm:     10px;
       }
 
-      .container {
-        max-width: 560px;
+      html, body { height: 100%; }
+
+      body {
+        font-family: var(--font-body);
+        background: var(--bg-body);
+        color: var(--text-primary);
+        font-size: 15px;
+        line-height: 1.5;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
       }
 
-      .topbar {
-        background: linear-gradient(
-          135deg,
-          var(--eurus) 0%,
-          var(--eurus-claro) 100%
-        );
-        box-shadow: 0 2px 12px var(--eurus-sombra);
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background:
+          radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 212, 255, 0.04) 0%, transparent 70%),
+          radial-gradient(ellipse 60% 40% at 20% 100%, rgba(0, 212, 255, 0.02) 0%, transparent 60%);
+        pointer-events: none;
+        z-index: 0;
       }
 
-      .btn-primary {
-        background: linear-gradient(
-          135deg,
-          var(--eurus-medio) 0%,
-          var(--eurus-claro) 100%
-        );
-        box-shadow: 0 4px 12px var(--eurus-sombra);
-      }
-      .btn-primary:hover {
-        opacity: 0.88;
-      }
-      .btn-outline {
-        color: var(--eurus);
-        border-color: var(--eurus);
-      }
-      .btn-outline:hover {
-        background: var(--eurus-fondo);
-        color: var(--eurus);
+      .app {
+        position: relative;
+        z-index: 1;
+        max-width: 520px;
+        margin: 0 auto;
+        padding: 0 16px 40px;
+        min-height: 100vh;
       }
 
-      .card-title {
-        color: var(--eurus);
-      }
-
-      #reader {
-        width: 100%;
-        border-radius: var(--radio);
-        overflow: hidden;
-      }
-
-      .info-box {
-        background: #fff;
-        border-radius: var(--radio);
-        padding: 20px;
-        box-shadow: var(--sombra-sm);
-        border-left: 4px solid var(--eurus-claro);
-      }
-      .info-nombre {
-        font-size: 22px;
-        font-weight: 700;
-        color: var(--eurus);
-        margin-bottom: 6px;
-      }
-      .info-fila {
+      /* ─── Header ─────────────────────────────────────────────────────────── */
+      .header {
         display: flex;
-        gap: 8px;
-        font-size: 13px;
-        color: var(--gris-medio);
-        margin-bottom: 4px;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 0 12px;
+        border-bottom: 1px solid var(--border-dim);
+        margin-bottom: 16px;
+        animation: fadeSlideDown 0.5s var(--ease-out) both;
       }
-      .info-fila strong {
-        color: var(--gris-texto);
+
+      .header-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+      }
+
+      .header-logo {
+        height: 26px;
+        opacity: 0.9;
+      }
+
+      .header-title {
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 15px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+      }
+
+      .header-event {
+        margin-left: auto;
+        flex: 1;
+        max-width: 220px;
+      }
+
+      .header-event select {
+        width: 100%;
+        padding: 10px 14px;
+        border-radius: var(--radius-sm);
+        border: 1.5px solid var(--border-dim);
+        background: var(--bg-card);
+        color: var(--text-primary);
+        font-family: var(--font-body);
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='%238895b3'%3E%3Cpath d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 14px center;
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+
+      .header-event select:focus {
+        outline: none;
+        border-color: var(--cyan);
+        box-shadow: 0 0 0 3px var(--cyan-glow);
+      }
+
+      .header-event select:hover {
+        border-color: var(--border-mid);
+      }
+
+      /* ─── Toast ──────────────────────────────────────────────────────────── */
+      .toast {
+        position: fixed;
+        top: 72px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-12px);
+        z-index: 100;
+        padding: 12px 24px;
+        border-radius: var(--radius-sm);
+        font-size: 14px;
+        font-weight: 500;
+        font-family: var(--font-body);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s, transform 0.35s var(--ease-out);
+        backdrop-filter: blur(12px);
+        max-width: calc(100vw - 32px);
+        text-align: center;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+        pointer-events: auto;
+      }
+
+      .toast.alerta-error {
+        background: rgba(255, 23, 68, 0.15);
+        border: 1px solid rgba(255, 23, 68, 0.3);
+        color: var(--red);
+      }
+
+      .toast.alerta-success {
+        background: rgba(0, 230, 118, 0.12);
+        border: 1px solid rgba(0, 230, 118, 0.25);
+        color: var(--green);
+      }
+
+      .toast.alerta-aviso {
+        background: rgba(255, 193, 7, 0.12);
+        border: 1px solid rgba(255, 193, 7, 0.25);
+        color: var(--amber);
+      }
+
+      /* ─── CP Section ─────────────────────────────────────────────────────── */
+      .cp-section {
+        background: var(--bg-card);
+        border: 1px solid var(--border-dim);
+        border-radius: var(--radius);
+        padding: 16px;
+        margin-bottom: 16px;
+        animation: fadeSlideUp 0.4s var(--ease-out) both;
+      }
+
+      .cp-label {
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        color: var(--text-muted);
+        margin-bottom: 12px;
       }
 
       .cp-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 8px;
-        margin-top: 12px;
       }
+
       .cp-card {
-        background: var(--eurus-fondo);
-        border-radius: var(--radio-sm);
-        padding: 10px 14px;
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--eurus);
+        padding: 14px 12px;
+        border-radius: var(--radius-sm);
+        background: var(--bg-elevated);
+        border: 1.5px solid var(--border-dim);
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-secondary);
         cursor: pointer;
-        border: 2px solid transparent;
-        transition:
-          border-color 0.2s,
-          background 0.2s;
+        transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.15s var(--ease-spring);
+        text-align: center;
+        animation: fadeSlideUp 0.35s var(--ease-out) both;
       }
+
       .cp-card:hover {
-        border-color: var(--eurus-claro);
+        background: var(--bg-hover);
+        border-color: var(--border-mid);
+        color: var(--text-primary);
       }
+
+      .cp-card:active {
+        transform: scale(0.96);
+      }
+
       .cp-card.selected {
-        border-color: var(--eurus-claro);
-        background: var(--eurus-claro);
-        color: #fff;
+        background: rgba(0, 212, 255, 0.08);
+        border-color: var(--cyan);
+        color: var(--cyan);
+        box-shadow: 0 0 20px var(--cyan-glow);
       }
+
       .cp-card.ya-marcado {
-        background: var(--eurus-fondo);
-        border-color: var(--eurus-claro);
-        color: var(--eurus-medio);
-        opacity: 0.7;
+        opacity: 0.5;
         cursor: default;
+        background: var(--bg-elevated);
+        border-color: var(--border-dim);
+        position: relative;
+      }
+
+      .cp-card.ya-marcado::after {
+        content: '✓';
+        position: absolute;
+        top: 4px;
+        right: 8px;
+        font-size: 11px;
+        color: var(--green);
+        opacity: 0.6;
+      }
+
+      .cp-selected {
+        font-size: 13px;
+        color: var(--cyan);
+        font-weight: 500;
+        margin-top: 10px;
+        min-height: 20px;
+      }
+
+      /* ─── Scanner Frame ───────────────────────────────────────────────────── */
+      .scanner-frame {
+        position: relative;
+        background: var(--bg-card);
+        border: 1px solid var(--border-dim);
+        border-radius: var(--radius);
+        overflow: hidden;
+        margin-bottom: 12px;
+        animation: fadeSlideUp 0.45s var(--ease-out) both;
+        animation-delay: 0.05s;
+      }
+
+      .scanner-view #reader {
+        width: 100%;
+        height: 100%;
+      }
+
+      .scanner-view video {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+      }
+
+      .scanner-view canvas {
+        display: none !important;
+      }
+
+      /* Corner brackets */
+      .bracket {
+        position: absolute;
+        z-index: 5;
+        width: 28px;
+        height: 28px;
+        border-color: var(--cyan);
+        opacity: 0;
+        transition: opacity 0.5s var(--ease-out);
+      }
+
+      .scanner-view.activo .bracket {
+        opacity: 1;
+      }
+
+      .bracket-tl { top: 16px; left: 16px; border-top: 3px solid; border-left: 3px solid; border-radius: 4px 0 0 0; }
+      .bracket-tr { top: 16px; right: 16px; border-top: 3px solid; border-right: 3px solid; border-radius: 0 4px 0 0; }
+      .bracket-bl { bottom: 16px; left: 16px; border-bottom: 3px solid; border-left: 3px solid; border-radius: 0 0 0 4px; }
+      .bracket-br { bottom: 16px; right: 16px; border-bottom: 3px solid; border-right: 3px solid; border-radius: 0 0 4px 0; }
+
+      /* Scan line */
+      .scanline {
+        position: absolute;
+        z-index: 4;
+        left: 12%;
+        right: 12%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+        opacity: 0;
+        transition: opacity 0.5s;
+        box-shadow: 0 0 12px var(--cyan), 0 0 24px rgba(0, 212, 255, 0.3);
+      }
+
+      .scanner-view.activo .scanline {
+        opacity: 1;
+        animation: scanMove 2.2s var(--ease-in-out) infinite;
+      }
+
+      @keyframes scanMove {
+        0%   { top: 15%; }
+        50%  { top: 78%; }
+        100% { top: 15%; }
+      }
+
+      /* Spotlight overlay */
+      .scanner-view {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 4 / 3;
+        background: #000;
+        overflow: hidden;
+      }
+
+      .scanner-view.activo::after {
+        content: '';
+        position: absolute;
+        z-index: 3;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 55%;
+        height: 60%;
+        border: 2px solid rgba(0, 212, 255, 0.3);
+        border-radius: 12px;
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+        pointer-events: none;
+      }
+
+      /* ─── Controls ────────────────────────────────────────────────────────── */
+      .controls {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+        animation: fadeSlideUp 0.45s var(--ease-out) both;
+        animation-delay: 0.1s;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 20px;
+        border-radius: var(--radius-sm);
+        border: none;
+        font-family: var(--font-body);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        min-height: 44px;
+        transition: background 0.2s, border-color 0.2s, transform 0.15s var(--ease-spring), box-shadow 0.2s;
+        letter-spacing: 0.2px;
+        flex-shrink: 0;
+      }
+
+      .btn:active {
+        transform: scale(0.95);
+        transition-duration: 0.08s;
+      }
+
+      .btn-primary {
+        flex: 1;
+        background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(0, 212, 255, 0.08));
+        border: 1.5px solid var(--cyan);
+        color: var(--cyan);
+      }
+
+      .btn-primary:hover {
+        background: linear-gradient(135deg, rgba(0, 212, 255, 0.3), rgba(0, 212, 255, 0.12));
+        box-shadow: 0 0 24px var(--cyan-glow);
+      }
+
+      .btn-outline {
+        background: transparent;
+        border: 1.5px solid var(--border-mid);
+        color: var(--text-secondary);
+        width: auto;
+      }
+
+      .btn-outline:hover {
+        background: var(--bg-hover);
+        border-color: var(--border-mid);
+        color: var(--text-primary);
+      }
+
+      .btn-sm {
+        padding: 8px 14px;
+        font-size: 13px;
+        min-height: 36px;
+      }
+
+      .btn-ghost {
+        background: transparent;
+        border: 1.5px solid var(--border-dim);
+        color: var(--text-muted);
+        font-size: 13px;
+        font-weight: 500;
+        padding: 8px 16px;
+        min-height: 38px;
+        cursor: pointer;
+        transition: background 0.2s, color 0.2s, border-color 0.2s;
+      }
+
+      .btn-ghost:hover {
+        background: var(--bg-card);
+        color: var(--text-secondary);
+        border-color: var(--border-mid);
+      }
+
+      .actions {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+        animation: fadeSlideUp 0.45s var(--ease-out) both;
+        animation-delay: 0.15s;
+      }
+
+      .test-qr {
+        display: none;
+        text-align: center;
+        margin-top: 12px;
+        padding: 16px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-dim);
+        border-radius: var(--radius);
+      }
+
+      .test-qr img {
+        display: inline-block;
+      }
+
+      /* ─── Result Panel ────────────────────────────────────────────────────── */
+      .result-panel {
+        position: fixed;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%) translateY(100%);
+        width: 100%;
+        max-width: 520px;
+        z-index: 50;
+        background: var(--bg-card);
+        border: 1px solid var(--border-dim);
+        border-radius: var(--radius) var(--radius) 0 0;
+        padding: 24px 20px 32px;
+        box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.5);
+        transition: transform 0.4s var(--ease-out);
+        backdrop-filter: blur(20px);
+        pointer-events: none;
+      }
+
+      .result-panel.open {
+        transform: translateX(-50%) translateY(0);
+        pointer-events: auto;
+      }
+
+      .result-panel::before {
+        content: '';
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 36px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--border-mid);
+      }
+
+      .result-header {
+        margin-bottom: 12px;
       }
 
       .estado-badge {
         display: inline-block;
-        padding: 4px 14px;
+        padding: 5px 14px;
         border-radius: 20px;
-        font-size: 13px;
-        font-weight: 700;
-      }
-      .estado-ok {
-        background: var(--eurus-fondo);
-        color: var(--eurus);
-      }
-      .estado-err {
-        background: var(--rojo-fondo);
-        color: var(--rojo);
-      }
-
-      #cp-seleccionado {
-        color: var(--eurus);
-      }
-
-      #log-recientes td {
         font-size: 12px;
+        font-weight: 600;
+        font-family: var(--font-body);
       }
 
-      .scanner-overlay {
-        position: relative;
-      }
-      .scanner-overlay.activo::after {
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 200px;
-        height: 200px;
-        border: 3px solid var(--eurus-claro);
-        border-radius: 12px;
-        pointer-events: none;
-        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
+      .estado-ok {
+        background: var(--green-dim);
+        color: var(--green);
+        border: 1px solid rgba(0, 230, 118, 0.2);
       }
 
-      /* ── Debug panel ── */
+      .estado-err {
+        background: var(--red-dim);
+        color: var(--red);
+        border: 1px solid rgba(255, 23, 68, 0.2);
+      }
+
+      .result-name {
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 22px;
+        color: var(--text-primary);
+        margin-bottom: 16px;
+      }
+
+      .result-details {
+        display: grid;
+        gap: 6px;
+        margin-bottom: 14px;
+      }
+
+      .result-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--border-dim);
+        font-size: 14px;
+      }
+
+      .result-row span:first-child {
+        color: var(--text-muted);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 500;
+      }
+
+      .result-row span:last-child {
+        color: var(--text-secondary);
+        font-weight: 500;
+        text-align: right;
+        word-break: break-word;
+        max-width: 60%;
+      }
+
+      .result-asistencias {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 16px;
+        line-height: 1.6;
+      }
+
+      .result-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .result-actions .btn-primary {
+        background: linear-gradient(135deg, rgba(0, 230, 118, 0.2), rgba(0, 230, 118, 0.08));
+        border-color: var(--green);
+        color: var(--green);
+      }
+
+      .result-actions .btn-primary:hover {
+        background: linear-gradient(135deg, rgba(0, 230, 118, 0.3), rgba(0, 230, 118, 0.12));
+        box-shadow: 0 0 24px rgba(0, 230, 118, 0.15);
+      }
+
+      .result-actions .btn-primary:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+
+      .result-actions .btn-outline {
+        width: auto;
+      }
+
+      /* ─── Log ──────────────────────────────────────────────────────────────── */
+      .log-section {
+        background: var(--bg-card);
+        border: 1px solid var(--border-dim);
+        border-radius: var(--radius);
+        padding: 16px;
+        margin-top: 16px;
+        animation: fadeSlideUp 0.45s var(--ease-out) both;
+        animation-delay: 0.2s;
+      }
+
+      .log-title {
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        color: var(--text-muted);
+        margin-bottom: 12px;
+      }
+
+      .log-section table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      .log-section th {
+        text-align: left;
+        padding: 8px 10px;
+        font-weight: 600;
+        color: var(--text-muted);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        border-bottom: 1px solid var(--border-dim);
+      }
+
+      .log-section td {
+        padding: 10px;
+        border-bottom: 1px solid rgba(30, 40, 69, 0.5);
+        color: var(--text-secondary);
+      }
+
+      .log-section tr:last-child td {
+        border-bottom: none;
+      }
+
+      .log-section tr:hover td {
+        background: var(--bg-elevated);
+      }
+
+      /* ─── Debug Panel (unchanged structure) ───────────────────────────────── */
       #debug-panel {
         position: fixed;
         bottom: 12px;
         right: 12px;
         z-index: 9999;
-        font-family: monospace;
+        font-family: var(--font-mono);
         font-size: 11px;
         line-height: 1.4;
       }
+
       #debug-toggle {
-        background: var(--eurus-medio);
-        color: #fff;
-        border: none;
+        background: rgba(0, 212, 255, 0.15);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-dim);
         border-radius: 50%;
-        width: 40px;
-        height: 40px;
+        width: 36px;
+        height: 36px;
         cursor: pointer;
-        font-size: 18px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        font-size: 16px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
         float: right;
+        transition: background 0.2s;
       }
+
+      #debug-toggle:hover {
+        background: rgba(0, 212, 255, 0.25);
+      }
+
       #debug-body {
         clear: both;
         margin-top: 4px;
-        background: rgba(0, 0, 0, 0.85);
-        color: #fff;
-        border-radius: 8px;
-        padding: 8px;
-        width: 320px;
-        max-height: 300px;
+        background: rgba(8, 11, 21, 0.95);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-dim);
+        border-radius: var(--radius-sm);
+        padding: 10px;
+        width: 300px;
+        max-height: 260px;
         overflow-y: auto;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
       }
+
       #debug-title {
-        font-weight: 700;
-        font-size: 12px;
-        margin-bottom: 6px;
-        color: #8cf;
+        font-weight: 600;
+        font-size: 11px;
+        margin-bottom: 8px;
+        color: var(--cyan);
+        font-family: var(--font-body);
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
       }
+
       #debug-logs {
         display: flex;
         flex-direction: column;
         gap: 2px;
       }
+
       .dbg-entry {
         padding: 2px 4px;
-        border-radius: 3px;
+        border-radius: 2px;
         word-break: break-all;
       }
+
       .dbg-time {
-        color: #888;
-        margin-right: 4px;
+        color: var(--text-muted);
+        margin-right: 6px;
       }
-      .dbg-INFO  { color: #aac; }
-      .dbg-OK    { color: #4c4; }
-      .dbg-WARN  { color: #fa0; }
-      .dbg-ERROR { color: #f44; }
-      .dbg-SCAN  { color: #8cf; }
-      .dbg-DETECT{ color: #0f0; font-weight: 700; }
+
+      .dbg-INFO  { color: #7986cb; }
+      .dbg-OK    { color: var(--green); }
+      .dbg-WARN  { color: var(--amber); }
+      .dbg-ERROR { color: var(--red); }
+      .dbg-SCAN  { color: var(--cyan); }
+      .dbg-DETECT{ color: var(--green); font-weight: 600; }
+
+      /* ─── Animations ──────────────────────────────────────────────────────── */
+      @keyframes fadeSlideUp {
+        from { opacity: 0; transform: translateY(16px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes fadeSlideDown {
+        from { opacity: 0; transform: translateY(-12px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      /* ─── Responsive ──────────────────────────────────────────────────────── */
+      @media (max-width: 420px) {
+        .app { padding: 0 12px 32px; }
+        .controls .btn { font-size: 13px; padding: 10px 14px; }
+        .result-panel { padding: 20px 16px 28px; }
+        .result-name { font-size: 19px; }
+        .cp-grid { grid-template-columns: 1fr; }
+        .header-event select { font-size: 12px; padding: 8px 12px; }
+      }
+
+      @media (min-width: 600px) {
+        .app { padding-top: 24px; }
+      }
     </style>
   </head>
   <body>
-    <div class="topbar">
-      <img src="icons/logoEurusblanco.png" alt="EURUS" style="height: 28px" />
-      <h1>Lectura de QR — EURUS</h1>
-      <a href="inscripciones.html" class="topbar-link">← Inscripciones</a>
-    </div>
-
-    <div class="container anim-page-in">
-      <div id="alerta" class="alerta" style="margin-bottom: 12px"></div>
-
-      <!-- SELECTOR EVENTO Y CHECKPOINT -->
-      <div
-        class="card"
-        style="border: 2px solid var(--eurus-claro); color: var(--eurus)"
-      >
-        <div class="card-title">Configuración de sesión</div>
-        <div class="form-groupE">
-          <label>Evento</label>
-          <div style="display: flex; gap: 6px; align-items: center">
-            <select id="sel-evento-qr" style="flex: 1">
-              <option value="">— Selecciona un evento —</option>
-            </select>
-          </div>
+    <div class="app">
+      <!-- ─── Header ──────────────────────────────────────────────────────── -->
+      <header class="header">
+        <div class="header-brand">
+          <img src="icons/logoEurusblanco.png" alt="EURUS" class="header-logo" />
+          <span class="header-title">Scanner</span>
         </div>
-        <div class="form-groupE" id="cp-section" style="display: none">
-          <label>Checkpoint que estás registrando ahora</label>
-          <div class="cp-grid" id="cp-grid"></div>
+        <div class="header-event">
+          <select id="sel-evento-qr">
+            <option value="">Seleccionar evento</option>
+          </select>
         </div>
-        <div
-          id="cp-seleccionado"
-          style="
-            font-size: 13px;
-            color: var(--eurus-medio);
-            font-weight: 600;
-            margin-top: 4px;
-          "
-        ></div>
+      </header>
+
+      <!-- ─── Toast ───────────────────────────────────────────────────────── -->
+      <div id="alerta" class="toast"></div>
+
+      <!-- ─── CP Section ──────────────────────────────────────────────────── -->
+      <div id="cp-section" class="cp-section" style="display:none">
+        <div class="cp-label">Checkpoint activo</div>
+        <div class="cp-grid" id="cp-grid"></div>
+        <div class="cp-selected" id="cp-seleccionado"></div>
       </div>
 
-      <!-- CÁMARA -->
-      <div
-        class="card"
-        style="border-left: 2px solid var(--eurus-claro); color: var(--eurus)"
-      >
-        <div class="card-title">Escanear QR</div>
-        <div class="scanner-overlay" id="scanner-activo">
+      <!-- ─── Scanner ─────────────────────────────────────────────────────── -->
+      <div class="scanner-frame">
+        <div class="scanner-view" id="scanner-activo">
           <div id="reader"></div>
-        </div>
-        <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap">
-          <button class="btn btn-primary" id="btn-iniciar" style="flex: 1">
-            ▶ Iniciar cámara
-          </button>
-          <button
-            class="btn btn-outline btn-sm"
-            id="btn-detener"
-            style="width: auto; display: none"
-          >
-            ⏹ Detener
-          </button>
-          <button
-            class="btn btn-outline btn-sm"
-            id="btn-cambiar-camara"
-            style="width: auto; display: none"
-          >
-            🔄 Cambiar cámara
-          </button>
-        </div>
-        <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap">
-          <label class="btn btn-outline btn-sm" style="width: auto; cursor: pointer; text-align: center">
-            📁 Escanear desde imagen
-            <input type="file" id="input-scan-file" accept="image/*" style="display: none" />
-          </label>
-          <button class="btn btn-outline btn-sm" id="btn-test-qr" style="width: auto">🔄 Probar QR de prueba</button>
-        </div>
-        <canvas id="capture-canvas" style="display: none"></canvas>
-        <p
-          style="
-            font-size: 12px;
-            color: var(--gris-medio);
-            margin-top: 8px;
-            text-align: center;
-          "
-        >
-          Apunta la cámara al QR del participante
-        </p>
-        <div
-          id="test-qr-wrap"
-          style="
-            display: none;
-            text-align: center;
-            margin-top: 12px;
-            padding: 12px;
-            background: #fff;
-            border-radius: var(--radio);
-          "
-        ></div>
-      </div>
-
-      <!-- RESULTADO DEL ESCANEO -->
-      <div id="resultado-box" style="display: none">
-        <div class="info-box" id="info-participante">
-          <div class="info-nombre" id="res-nombre"></div>
-          <div class="info-fila">
-            <span>📧</span><strong id="res-correo"></strong>
-          </div>
-          <div class="info-fila">
-            <span>🪪</span><strong id="res-cedula"></strong>
-          </div>
-          <div class="info-fila">
-            <span>🏛</span><strong id="res-universidad"></strong>
-          </div>
-          <div class="info-fila">
-            <span>🎓</span><strong id="res-carrera"></strong>
-          </div>
-          <div style="margin-top: 14px">
-            <span id="res-estado-badge" class="estado-badge"></span>
-          </div>
-          <div
-            id="res-asistencias-actuales"
-            style="margin-top: 10px; font-size: 13px; color: var(--gris-medio)"
-          ></div>
-          <div
-            style="margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap"
-          >
-            <button
-              class="btn btn-primary"
-              id="btn-confirmar-asistencia"
-              style="flex: 1"
-            >
-              ✅ Confirmar asistencia
-            </button>
-            <button
-              class="btn btn-outline btn-sm"
-              id="btn-cancelar-scan"
-              style="width: auto"
-            >
-              Cancelar
-            </button>
-          </div>
+          <div class="bracket bracket-tl"></div>
+          <div class="bracket bracket-tr"></div>
+          <div class="bracket bracket-bl"></div>
+          <div class="bracket bracket-br"></div>
+          <div class="scanline"></div>
         </div>
       </div>
 
-      <!-- LOG DE ÚLTIMOS ESCANEOS -->
-      <div
-        class="card"
-        style="
-          margin-top: 20px;
-          border: 2px solid var(--eurus-claro);
-          color: var(--eurus);
-        "
-      >
-        <div class="card-title">Últimos registros de esta sesión</div>
-        <div class="tabla-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th
-                  style="
-                    border-bottom: 2px solid var(--eurus-claro);
-                    color: var(--eurus);
-                  "
-                >
-                  Nombre
-                </th>
-                <th
-                  style="
-                    border-bottom: 2px solid var(--eurus-claro);
-                    color: var(--eurus);
-                  "
-                >
-                  Checkpoint
-                </th>
-                <th
-                  style="
-                    border-bottom: 2px solid var(--eurus-claro);
-                    color: var(--eurus);
-                  "
-                >
-                  Hora
-                </th>
-              </tr>
-            </thead>
-            <tbody id="log-recientes">
-              <tr>
-                <td
-                  colspan="3"
-                  style="text-align: center; color: var(--gris-medio)"
-                >
-                  Sin registros aún
-                </td>
-              </tr>
-            </tbody>
-          </table>
+      <canvas id="capture-canvas" style="display:none"></canvas>
+
+      <div class="controls">
+        <button class="btn btn-primary" id="btn-iniciar">▶ Iniciar cámara</button>
+        <button class="btn btn-outline btn-sm" id="btn-detener" style="display:none">⏹ Detener</button>
+        <button class="btn btn-outline btn-sm" id="btn-cambiar-camara" style="display:none">🔄 Cambiar</button>
+      </div>
+
+      <div class="actions">
+        <label class="btn-ghost" style="cursor:pointer">
+          📁 Escanear imagen
+          <input type="file" id="input-scan-file" accept="image/*" hidden />
+        </label>
+        <button class="btn-ghost" id="btn-test-qr">🔄 QR prueba</button>
+      </div>
+
+      <div class="test-qr" id="test-qr-wrap"></div>
+
+      <!-- ─── Result Panel ────────────────────────────────────────────────── -->
+      <div id="resultado-box" class="result-panel">
+        <div class="result-header">
+          <span id="res-estado-badge" class="estado-badge"></span>
         </div>
+        <div class="result-name" id="res-nombre"></div>
+        <div class="result-details">
+          <div class="result-row"><span>Correo</span><span id="res-correo"></span></div>
+          <div class="result-row"><span>Cédula</span><span id="res-cedula"></span></div>
+          <div class="result-row"><span>Universidad</span><span id="res-universidad"></span></div>
+          <div class="result-row"><span>Carrera</span><span id="res-carrera"></span></div>
+        </div>
+        <div class="result-asistencias" id="res-asistencias-actuales"></div>
+        <div class="result-actions">
+          <button class="btn btn-primary" id="btn-confirmar-asistencia">✅ Confirmar asistencia</button>
+          <button class="btn btn-outline btn-sm" id="btn-cancelar-scan">Cancelar</button>
+        </div>
+      </div>
+
+      <!-- ─── Log ─────────────────────────────────────────────────────────── -->
+      <div class="log-section">
+        <div class="log-title">Registros de la sesión</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Checkpoint</th>
+              <th>Hora</th>
+            </tr>
+          </thead>
+          <tbody id="log-recientes">
+            <tr>
+              <td colspan="3" style="text-align:center; color:var(--text-muted); padding:24px;">Sin registros aún</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
+    <!-- ─── JS ────────────────────────────────────────────────────────────── -->
     <script type="module" src="js/lecturaQR.js"></script>
+
+    <!-- ─── Debug Panel ───────────────────────────────────────────────────── -->
     <div id="debug-panel">
-      <button id="debug-toggle" title="Abrir panel de depuración">🐛</button>
-      <div id="debug-body" style="display: none">
-        <div id="debug-title">Panel de depuración</div>
+      <button id="debug-toggle" title="Depuración">🐛</button>
+      <div id="debug-body" style="display:none">
+        <div id="debug-title">Consola de depuración</div>
         <div id="debug-logs"></div>
       </div>
     </div>
 
     <script>
-      // Debug logger: visible en pantalla y en consola
       (function () {
         try {
           const logs = document.getElementById("debug-logs");
           const toggle = document.getElementById("debug-toggle");
           const body = document.getElementById("debug-body");
-          if (!logs || !toggle || !body) {
-            console.warn("[Debug] Elementos no encontrados");
-            return;
-          }
+          if (!logs || !toggle || !body) { console.warn("[Debug] Elementos no encontrados"); return; }
           let visible = false;
-
           toggle.addEventListener("click", () => {
             visible = !visible;
             body.style.display = visible ? "block" : "none";
             toggle.textContent = visible ? "✕" : "🐛";
           });
-
           window.debugLog = function (type, msg) {
             try {
               const time = new Date().toLocaleTimeString("es-PA");
               const div = document.createElement("div");
               div.className = "dbg-entry dbg-" + type;
-              div.innerHTML = `<span class="dbg-time">${time}</span> ${msg}`;
+              div.innerHTML = '<span class="dbg-time">' + time + '</span> ' + msg;
               logs.appendChild(div);
               if (logs.children.length > 30) logs.removeChild(logs.firstChild);
               logs.scrollTop = logs.scrollHeight;
-            } catch (e) {
-              console.warn("[Debug] Error en log:", e);
-            }
+            } catch (e) { console.warn("[Debug] Error en log:", e); }
           };
-        } catch (e) {
-          console.warn("[Debug] Error init:", e);
-        }
+        } catch (e) { console.warn("[Debug] Error init:", e); }
       })();
     </script>
   </body>

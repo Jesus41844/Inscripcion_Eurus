@@ -1,224 +1,478 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>EURUS — Lectura de QR</title>
-  <link rel="stylesheet" href="css/styles.css"/>
-  <script src="js/libs/html5-qrcode.min.js"></script>
-  <script src="js/libs/qrcode.min.js"></script>
-  <script type="module">
-    import { guardRoute } from "./js/auth.js";
-    guardRoute();
-  </script>
-  <style>
-    /* ── Paleta EURUS: azul oscuro ── */
-    :root {
-      --eurus:        #154360;
-      --eurus-medio:  #1a5276;
-      --eurus-claro:  #2471a3;
-      --eurus-fondo:  #d6eaf8;
-      --eurus-sombra: rgba(21, 67, 96, 0.20);
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EURUS — Lectura de QR</title>
+    <link rel="stylesheet" href="css/styles.css" />
+    <script src="js/libs/html5-qrcode.min.js"></script>
+    <script src="js/libs/qrcode.min.js"></script>
+    <script type="module">
+      import { guardRoute } from "./js/auth.js";
+      guardRoute();
+    </script>
+    <style>
+      /* ── Paleta EURUS: azul oscuro ── */
+      :root {
+        --eurus: #154360;
+        --eurus-medio: #1a5276;
+        --eurus-claro: #2471a3;
+        --eurus-fondo: #d6eaf8;
+        --eurus-sombra: rgba(21, 67, 96, 0.2);
+      }
 
-    .container { max-width: 560px; }
+      .container {
+        max-width: 560px;
+      }
 
-    .topbar {
-      background: linear-gradient(135deg, var(--eurus) 0%, var(--eurus-claro) 100%);
-      box-shadow: 0 2px 12px var(--eurus-sombra);
-    }
+      .topbar {
+        background: linear-gradient(
+          135deg,
+          var(--eurus) 0%,
+          var(--eurus-claro) 100%
+        );
+        box-shadow: 0 2px 12px var(--eurus-sombra);
+      }
 
-    .btn-primary {
-      background: linear-gradient(135deg, var(--eurus-medio) 0%, var(--eurus-claro) 100%);
-      box-shadow: 0 4px 12px var(--eurus-sombra);
-    }
-    .btn-primary:hover { opacity: 0.88; }
-    .btn-outline { color: var(--eurus); border-color: var(--eurus); }
-    .btn-outline:hover { background: var(--eurus-fondo); color: var(--eurus); }
+      .btn-primary {
+        background: linear-gradient(
+          135deg,
+          var(--eurus-medio) 0%,
+          var(--eurus-claro) 100%
+        );
+        box-shadow: 0 4px 12px var(--eurus-sombra);
+      }
+      .btn-primary:hover {
+        opacity: 0.88;
+      }
+      .btn-outline {
+        color: var(--eurus);
+        border-color: var(--eurus);
+      }
+      .btn-outline:hover {
+        background: var(--eurus-fondo);
+        color: var(--eurus);
+      }
 
-    .card-title { color: var(--eurus); }
+      .card-title {
+        color: var(--eurus);
+      }
 
-    #reader { width: 100%; border-radius: var(--radio); overflow: hidden; }
+      #reader {
+        width: 100%;
+        border-radius: var(--radio);
+        overflow: hidden;
+      }
 
-    .info-box { background: #fff; border-radius: var(--radio); padding: 20px; box-shadow: var(--sombra-sm); border-left: 4px solid var(--eurus-claro); }
-    .info-nombre { font-size: 22px; font-weight: 700; color: var(--eurus); margin-bottom: 6px; }
-    .info-fila { display: flex; gap: 8px; font-size: 13px; color: var(--gris-medio); margin-bottom: 4px; }
-    .info-fila strong { color: var(--gris-texto); }
+      .info-box {
+        background: #fff;
+        border-radius: var(--radio);
+        padding: 20px;
+        box-shadow: var(--sombra-sm);
+        border-left: 4px solid var(--eurus-claro);
+      }
+      .info-nombre {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--eurus);
+        margin-bottom: 6px;
+      }
+      .info-fila {
+        display: flex;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--gris-medio);
+        margin-bottom: 4px;
+      }
+      .info-fila strong {
+        color: var(--gris-texto);
+      }
 
-    .cp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
-    .cp-card { background: var(--eurus-fondo); border-radius: var(--radio-sm); padding: 10px 14px; font-size: 13px; font-weight: 600; color: var(--eurus); cursor: pointer; border: 2px solid transparent; transition: border-color 0.2s, background 0.2s; }
-    .cp-card:hover { border-color: var(--eurus-claro); }
-    .cp-card.selected { border-color: var(--eurus-claro); background: var(--eurus-claro); color: #fff; }
-    .cp-card.ya-marcado { background: var(--eurus-fondo); border-color: var(--eurus-claro); color: var(--eurus-medio); opacity: 0.7; cursor: default; }
+      .cp-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .cp-card {
+        background: var(--eurus-fondo);
+        border-radius: var(--radio-sm);
+        padding: 10px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--eurus);
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition:
+          border-color 0.2s,
+          background 0.2s;
+      }
+      .cp-card:hover {
+        border-color: var(--eurus-claro);
+      }
+      .cp-card.selected {
+        border-color: var(--eurus-claro);
+        background: var(--eurus-claro);
+        color: #fff;
+      }
+      .cp-card.ya-marcado {
+        background: var(--eurus-fondo);
+        border-color: var(--eurus-claro);
+        color: var(--eurus-medio);
+        opacity: 0.7;
+        cursor: default;
+      }
 
-    .estado-badge { display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; }
-    .estado-ok  { background: var(--eurus-fondo); color: var(--eurus); }
-    .estado-err { background: var(--rojo-fondo);  color: var(--rojo); }
+      .estado-badge {
+        display: inline-block;
+        padding: 4px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .estado-ok {
+        background: var(--eurus-fondo);
+        color: var(--eurus);
+      }
+      .estado-err {
+        background: var(--rojo-fondo);
+        color: var(--rojo);
+      }
 
-    #cp-seleccionado { color: var(--eurus); }
+      #cp-seleccionado {
+        color: var(--eurus);
+      }
 
-    #log-recientes td { font-size: 12px; }
+      #log-recientes td {
+        font-size: 12px;
+      }
 
-    .scanner-overlay { position: relative; }
-    .scanner-overlay.activo::after { content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:200px; height:200px; border:3px solid var(--eurus-claro); border-radius:12px; pointer-events:none; box-shadow:0 0 0 9999px rgba(0,0,0,0.4); }
-  </style>
-</head>
-<body>
-
-<div class="topbar">
-  <img src="icons/logoEurusblanco.png" alt="EURUS" style="height:28px;"/>
-  <h1>Lectura de QR — EURUS</h1>
-  <a href="inscripciones.html" class="topbar-link">← Inscripciones</a>
-</div>
-
-<div class="container anim-page-in">
-
-  <div id="alerta" class="alerta" style="margin-bottom:12px;"></div>
-
-  <!-- SELECTOR EVENTO Y CHECKPOINT -->
-  <div class="card" style="border: 2px solid var(--eurus-claro);color:var(--eurus);">
-    <div class="card-title">Configuración de sesión</div>
-    <div class="form-groupE">
-      <label>Evento</label>
-      <select id="sel-evento-qr"><option value="">— Selecciona un evento —</option></select>
+      .scanner-overlay {
+        position: relative;
+      }
+      .scanner-overlay.activo::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 200px;
+        height: 200px;
+        border: 3px solid var(--eurus-claro);
+        border-radius: 12px;
+        pointer-events: none;
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <img src="icons/logoEurusblanco.png" alt="EURUS" style="height: 28px" />
+      <h1>Lectura de QR — EURUS</h1>
+      <a href="inscripciones.html" class="topbar-link">← Inscripciones</a>
     </div>
-    <div class="form-groupE" id="cp-section" style="display:none;">
-      <label>Checkpoint que estás registrando ahora</label>
-      <div class="cp-grid" id="cp-grid"></div>
-    </div>
-    <div id="cp-seleccionado" style="font-size:13px;color:var(--eurus-medio);font-weight:600;margin-top:4px;"></div>
-  </div>
 
-  <!-- CÁMARA -->
-  <div class="card" style="border-left: 2px solid var(--eurus-claro);color:var(--eurus);">
-    <div class="card-title">Escanear QR</div>
-    <div class="scanner-overlay" id="scanner-activo">
-      <div id="reader"></div>
-    </div>
-    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="btn btn-primary" id="btn-iniciar" style="flex:1">▶ Iniciar cámara</button>
-      <button class="btn btn-outline btn-sm" id="btn-detener" style="width:auto;display:none">⏹ Detener</button>
-      <button class="btn btn-outline btn-sm" id="btn-capturar" style="width:auto;display:none">📸 Capturar</button>
-      <button class="btn btn-outline btn-sm" id="btn-cambiar-camara" style="width:auto;display:none">🔄 Cambiar cámara</button>
-    </div>
-    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-      <label class="btn btn-outline btn-sm" style="width:auto;cursor:pointer;text-align:center;">
-        📁 Escanear desde imagen
-        <input type="file" id="input-scan-file" accept="image/*" style="display:none"/>
-      </label>
-      <button class="btn btn-outline btn-sm" id="btn-test-qr" style="width:auto;">🔄 Probar QR de prueba</button>
-    </div>
-    <canvas id="capture-canvas" style="display:none;"></canvas>
-    <div id="capture-preview-wrap" style="display:none;margin-top:8px;text-align:center;">
-      <p style="font-size:11px;color:var(--gris-medio);margin-bottom:4px;">📸 Última foto capturada:</p>
-      <img id="capture-preview" style="max-width:100%;max-height:300px;border-radius:8px;border:2px solid var(--eurus-claro);"/>
-    </div>
-    <p style="font-size:12px;color:var(--gris-medio);margin-top:8px;text-align:center;">Apunta la cámara al QR del participante</p>
-    <div id="test-qr-wrap" style="display:none;text-align:center;margin-top:12px;padding:12px;background:#fff;border-radius:var(--radio);"></div>
-  </div>
+    <div class="container anim-page-in">
+      <div id="alerta" class="alerta" style="margin-bottom: 12px"></div>
 
-  <!-- RESULTADO DEL ESCANEO -->
-  <div id="resultado-box" style="display:none;">
-    <div class="info-box" id="info-participante">
-      <div class="info-nombre" id="res-nombre"></div>
-      <div class="info-fila"><span>📧</span><strong id="res-correo"></strong></div>
-      <div class="info-fila"><span>🪪</span><strong id="res-cedula"></strong></div>
-      <div class="info-fila"><span>🏛</span><strong id="res-universidad"></strong></div>
-      <div class="info-fila"><span>🎓</span><strong id="res-carrera"></strong></div>
-      <div style="margin-top:14px;">
-        <span id="res-estado-badge" class="estado-badge"></span>
+      <!-- SELECTOR EVENTO Y CHECKPOINT -->
+      <div
+        class="card"
+        style="border: 2px solid var(--eurus-claro); color: var(--eurus)"
+      >
+        <div class="card-title">Configuración de sesión</div>
+        <div class="form-groupE">
+          <label>Evento</label>
+          <select id="sel-evento-qr">
+            <option value="">— Selecciona un evento —</option>
+          </select>
+        </div>
+        <div class="form-groupE" id="cp-section" style="display: none">
+          <label>Checkpoint que estás registrando ahora</label>
+          <div class="cp-grid" id="cp-grid"></div>
+        </div>
+        <div
+          id="cp-seleccionado"
+          style="
+            font-size: 13px;
+            color: var(--eurus-medio);
+            font-weight: 600;
+            margin-top: 4px;
+          "
+        ></div>
       </div>
-      <div id="res-asistencias-actuales" style="margin-top:10px;font-size:13px;color:var(--gris-medio);"></div>
-      <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="btn btn-primary" id="btn-confirmar-asistencia" style="flex:1">✅ Confirmar asistencia</button>
-        <button class="btn btn-outline btn-sm" id="btn-cancelar-scan" style="width:auto">Cancelar</button>
+
+      <!-- CÁMARA -->
+      <div
+        class="card"
+        style="border-left: 2px solid var(--eurus-claro); color: var(--eurus)"
+      >
+        <div class="card-title">Escanear QR</div>
+        <div class="scanner-overlay" id="scanner-activo">
+          <div id="reader"></div>
+        </div>
+        <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap">
+          <button class="btn btn-primary" id="btn-iniciar" style="flex: 1">
+            ▶ Iniciar cámara
+          </button>
+          <button
+            class="btn btn-outline btn-sm"
+            id="btn-detener"
+            style="width: auto; display: none"
+          >
+            ⏹ Detener
+          </button>
+          <button
+            class="btn btn-outline btn-sm"
+            id="btn-cambiar-camara"
+            style="width: auto; display: none"
+          >
+            🔄 Cambiar cámara
+          </button>
+        </div>
+        <canvas id="capture-canvas" style="display: none"></canvas>
+        <p
+          style="
+            font-size: 12px;
+            color: var(--gris-medio);
+            margin-top: 8px;
+            text-align: center;
+          "
+        >
+          Apunta la cámara al QR del participante
+        </p>
+        <div
+          id="test-qr-wrap"
+          style="
+            display: none;
+            text-align: center;
+            margin-top: 12px;
+            padding: 12px;
+            background: #fff;
+            border-radius: var(--radio);
+          "
+        ></div>
+      </div>
+
+      <!-- RESULTADO DEL ESCANEO -->
+      <div id="resultado-box" style="display: none">
+        <div class="info-box" id="info-participante">
+          <div class="info-nombre" id="res-nombre"></div>
+          <div class="info-fila">
+            <span>📧</span><strong id="res-correo"></strong>
+          </div>
+          <div class="info-fila">
+            <span>🪪</span><strong id="res-cedula"></strong>
+          </div>
+          <div class="info-fila">
+            <span>🏛</span><strong id="res-universidad"></strong>
+          </div>
+          <div class="info-fila">
+            <span>🎓</span><strong id="res-carrera"></strong>
+          </div>
+          <div style="margin-top: 14px">
+            <span id="res-estado-badge" class="estado-badge"></span>
+          </div>
+          <div
+            id="res-asistencias-actuales"
+            style="margin-top: 10px; font-size: 13px; color: var(--gris-medio)"
+          ></div>
+          <div
+            style="margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap"
+          >
+            <button
+              class="btn btn-primary"
+              id="btn-confirmar-asistencia"
+              style="flex: 1"
+            >
+              ✅ Confirmar asistencia
+            </button>
+            <button
+              class="btn btn-outline btn-sm"
+              id="btn-cancelar-scan"
+              style="width: auto"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- LOG DE ÚLTIMOS ESCANEOS -->
+      <div
+        class="card"
+        style="
+          margin-top: 20px;
+          border: 2px solid var(--eurus-claro);
+          color: var(--eurus);
+        "
+      >
+        <div class="card-title">Últimos registros de esta sesión</div>
+        <div class="tabla-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th
+                  style="
+                    border-bottom: 2px solid var(--eurus-claro);
+                    color: var(--eurus);
+                  "
+                >
+                  Nombre
+                </th>
+                <th
+                  style="
+                    border-bottom: 2px solid var(--eurus-claro);
+                    color: var(--eurus);
+                  "
+                >
+                  Checkpoint
+                </th>
+                <th
+                  style="
+                    border-bottom: 2px solid var(--eurus-claro);
+                    color: var(--eurus);
+                  "
+                >
+                  Hora
+                </th>
+              </tr>
+            </thead>
+            <tbody id="log-recientes">
+              <tr>
+                <td
+                  colspan="3"
+                  style="text-align: center; color: var(--gris-medio)"
+                >
+                  Sin registros aún
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- LOG DE ÚLTIMOS ESCANEOS -->
-  <div class="card" style="margin-top:20px;border: 2px solid var(--eurus-claro);color:var(--eurus);">
-    <div class="card-title">Últimos registros de esta sesión</div>
-    <div class="tabla-wrap">
-      <table>
-        <thead><tr><th style="border-bottom: 2px solid var(--eurus-claro);color:var(--eurus);">Nombre</th><th style="border-bottom: 2px solid var(--eurus-claro);color:var(--eurus);">Checkpoint</th><th style="border-bottom: 2px solid var(--eurus-claro);color:var(--eurus);">Hora</th></tr></thead>
-        <tbody id="log-recientes"><tr><td colspan="3" style="text-align:center;color:var(--gris-medio)">Sin registros aún</td></tr></tbody>
-      </table>
+    <script type="module" src="js/lecturaQR.js"></script>
+    <div id="debug-panel">
+      <button id="debug-toggle" title="Abrir panel de depuración">🐛</button>
+      <div id="debug-body" style="display: none">
+        <div id="debug-title">Panel de depuración</div>
+        <div id="debug-logs"></div>
+      </div>
     </div>
-  </div>
 
-</div>
+    <style>
+      #debug-panel {
+        position: fixed;
+        bottom: 12px;
+        right: 12px;
+        z-index: 9999;
+        font-family: monospace;
+        font-size: 11px;
+        line-height: 1.4;
+      }
+      #debug-toggle {
+        background: var(--eurus-medio);
+        color: #fff;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        cursor: pointer;
+        font-size: 18px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        float: right;
+      }
+      #debug-body {
+        clear: both;
+        margin-top: 4px;
+        background: rgba(0, 0, 0, 0.85);
+        color: #fff;
+        border-radius: 8px;
+        padding: 8px;
+        width: 320px;
+        max-height: 300px;
+        overflow-y: auto;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      }
+      #debug-title {
+        font-weight: 700;
+        font-size: 12px;
+        margin-bottom: 6px;
+        color: #8cf;
+      }
+      #debug-logs {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .dbg-entry {
+        padding: 2px 4px;
+        border-radius: 3px;
+        word-break: break-all;
+      }
+      .dbg-time {
+        color: #888;
+        margin-right: 4px;
+      }
+      .dbg-INFO {
+        color: #aac;
+      }
+      .dbg-OK {
+        color: #4c4;
+      }
+      .dbg-WARN {
+        color: #fa0;
+      }
+      .dbg-ERROR {
+        color: #f44;
+      }
+      .dbg-SCAN {
+        color: #8cf;
+      }
+      .dbg-DETECT {
+        color: #0f0;
+        font-weight: 700;
+      }
+    </style>
 
-<script type="module" src="js/lecturaQR.js"></script>
-<div id="debug-panel">
-  <button id="debug-toggle" title="Abrir panel de depuración">🐛</button>
-  <div id="debug-body" style="display:none;">
-    <div id="debug-title">Panel de depuración</div>
-    <div id="debug-logs"></div>
-  </div>
-</div>
+    <script>
+      // Debug logger: visible en pantalla y en consola
+      (function () {
+        try {
+          const logs = document.getElementById("debug-logs");
+          const toggle = document.getElementById("debug-toggle");
+          const body = document.getElementById("debug-body");
+          if (!logs || !toggle || !body) {
+            console.warn("[Debug] Elementos no encontrados");
+            return;
+          }
+          let visible = false;
 
-<style>
-#debug-panel {
-  position: fixed; bottom: 12px; right: 12px; z-index: 9999;
-  font-family: monospace; font-size: 11px; line-height: 1.4;
-}
-#debug-toggle {
-  background: var(--eurus-medio); color: #fff; border: none;
-  border-radius: 50%; width: 40px; height: 40px; cursor: pointer;
-  font-size: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  float: right;
-}
-#debug-body {
-  clear: both; margin-top: 4px;
-  background: rgba(0,0,0,0.85); color: #fff;
-  border-radius: 8px; padding: 8px;
-  width: 320px; max-height: 300px;
-  overflow-y: auto;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-}
-#debug-title { font-weight: 700; font-size: 12px; margin-bottom: 6px; color: #8cf; }
-#debug-logs { display: flex; flex-direction: column; gap: 2px; }
-.dbg-entry { padding: 2px 4px; border-radius: 3px; word-break: break-all; }
-.dbg-time { color: #888; margin-right: 4px; }
-.dbg-INFO  { color: #aac; }
-.dbg-OK    { color: #4c4; }
-.dbg-WARN  { color: #fa0; }
-.dbg-ERROR { color: #f44; }
-.dbg-SCAN  { color: #8cf; }
-.dbg-DETECT{ color: #0f0; font-weight: 700; }
-</style>
+          toggle.addEventListener("click", () => {
+            visible = !visible;
+            body.style.display = visible ? "block" : "none";
+            toggle.textContent = visible ? "✕" : "🐛";
+          });
 
-<script>
-// Debug logger: visible en pantalla y en consola
-(function() {
-  try {
-    const logs = document.getElementById("debug-logs");
-    const toggle = document.getElementById("debug-toggle");
-    const body = document.getElementById("debug-body");
-    if (!logs || !toggle || !body) { console.warn("[Debug] Elementos no encontrados"); return; }
-    let visible = false;
-
-    toggle.addEventListener("click", () => {
-      visible = !visible;
-      body.style.display = visible ? "block" : "none";
-      toggle.textContent = visible ? "✕" : "🐛";
-    });
-
-    window.debugLog = function(type, msg) {
-      try {
-        const time = new Date().toLocaleTimeString("es-PA");
-        const div = document.createElement("div");
-        div.className = "dbg-entry dbg-" + type;
-        div.innerHTML = `<span class="dbg-time">${time}</span> ${msg}`;
-        logs.appendChild(div);
-        if (logs.children.length > 30) logs.removeChild(logs.firstChild);
-        logs.scrollTop = logs.scrollHeight;
-      } catch (e) { console.warn("[Debug] Error en log:", e); }
-    };
-  } catch (e) { console.warn("[Debug] Error init:", e); }
-})();
-</script>
-
-</body>
+          window.debugLog = function (type, msg) {
+            try {
+              const time = new Date().toLocaleTimeString("es-PA");
+              const div = document.createElement("div");
+              div.className = "dbg-entry dbg-" + type;
+              div.innerHTML = `<span class="dbg-time">${time}</span> ${msg}`;
+              logs.appendChild(div);
+              if (logs.children.length > 30) logs.removeChild(logs.firstChild);
+              logs.scrollTop = logs.scrollHeight;
+            } catch (e) {
+              console.warn("[Debug] Error en log:", e);
+            }
+          };
+        } catch (e) {
+          console.warn("[Debug] Error init:", e);
+        }
+      })();
+    </script>
+  </body>
 </html>

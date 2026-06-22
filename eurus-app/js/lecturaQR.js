@@ -533,11 +533,19 @@ async function esperarRol() {
   return false;
 }
 
+// ─── Recargar eventos (fallback manual) ──────────────────────────────────────
+el("btn-recargar-eventos").addEventListener("click", async () => {
+  dbg("INFO", "🔄 Recarga manual de eventos...");
+  await cargarEventos();
+  dbg("INFO", "🔄 Recarga completada");
+});
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
+console.log("[QR] módulo lecturaQR.js ejecutándose");
 dbg("INFO", "📱 App iniciada — cargando eventos y verificando permisos");
 
 // 1) Cargar eventos siempre (no depende de auth)
-cargarEventos();
+await cargarEventos();
 
 // 2) Verificar permisos (redirige si no tiene acceso, sin bloquear la carga)
 esperarRol().then(ok => {

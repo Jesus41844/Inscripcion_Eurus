@@ -183,9 +183,12 @@
         <div class="card-title">Configuración de sesión</div>
         <div class="form-groupE">
           <label>Evento</label>
-          <select id="sel-evento-qr">
-            <option value="">— Selecciona un evento —</option>
-          </select>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <select id="sel-evento-qr" style="flex:1;">
+              <option value="">— Selecciona un evento —</option>
+            </select>
+            <button class="btn btn-outline btn-sm" id="btn-recargar-eventos" style="width:auto;white-space:nowrap;font-size:12px;">⟳ Recargar</button>
+          </div>
         </div>
         <div class="form-groupE" id="cp-section" style="display: none">
           <label>Checkpoint que estás registrando ahora</label>

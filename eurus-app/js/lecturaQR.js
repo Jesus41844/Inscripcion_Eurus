@@ -52,10 +52,21 @@ async function cargarEventos() {
 
 el("sel-evento-qr").addEventListener("change", async () => {
   const id = el("sel-evento-qr").value;
-  if (!id) { eventoActivo = null; el("cp-section").style.display = "none"; return; }
+  dbg("INFO", "📋 Evento seleccionado: " + (id || "(ninguno)"));
+  if (!id) { eventoActivo = null; el("cp-section").style.display = "none"; renderCheckpoints(); return; }
   const snap = await getDoc(doc(db, "eventos_eurus", id));
-  if (!snap.exists()) return;
-  eventoActivo = { id, ...snap.data() };
+  if (!snap.exists()) {
+    dbg("ERROR", "❌ El documento del evento NO existe en Firestore: " + id);
+    alerta("error", "Evento no encontrado en la base de datos.");
+    return;
+  }
+  const data = snap.data();
+  const checkpoints = data.checkpoints;
+  dbg("INFO", "📋 Evento cargado: " + (data.nombre || "?") + " — checkpoints: " + (checkpoints ? checkpoints.length : 0));
+  if (!checkpoints || !checkpoints.length) {
+    dbg("WARN", "⚠️ El evento no tiene checkpoints definidos");
+  }
+  eventoActivo = { id, ...data };
   renderCheckpoints();
   el("cp-section").style.display = "block";
 });
@@ -63,6 +74,11 @@ el("sel-evento-qr").addEventListener("change", async () => {
 function renderCheckpoints() {
   const cps = eventoActivo?.checkpoints || [];
   const grid = el("cp-grid");
+  dbg("INFO", "📋 renderCheckpoints: " + cps.length + " checkpoints");
+  if (!cps.length) {
+    grid.innerHTML = '<p style="font-size:13px;color:var(--gris-medio);text-align:center;">Este evento no tiene checkpoints. Agrega checkpoints en la configuración del evento.</p>';
+    return;
+  }
   grid.innerHTML = cps.map(cp => `
     <div class="cp-card" data-id="${cp.id}" data-nombre="${cp.nombre}" onclick="seleccionarCP(this)">
       ${cp.nombre}

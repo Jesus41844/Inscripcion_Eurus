@@ -23,13 +23,53 @@
       --red:           #ff1744;
       --text-primary:  #e4e8f0;
       --text-secondary:#8895b3;
-      --text-muted:    #4a5a7a;
+      --text-muted:    #7e8ba8;
       --font-display:  'Syne', sans-serif;
       --font-body:     'Outfit', sans-serif;
       --radius:        16px;
       --radius-sm:     10px;
       --ease-out:      cubic-bezier(0.22, 1, 0.36, 1);
     }
+    html { scroll-behavior: smooth; }
+
+    .skip-link {
+      position: absolute; top: -100%; left: 8px; z-index: 10000;
+      background: var(--cyan); color: var(--bg-deep);
+      font-family: var(--font-body); font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+      text-decoration: none; transition: top 0.2s var(--ease-out);
+    }
+    .skip-link:focus { top: 0; }
+
+    .visually-hidden {
+      position: absolute; width: 1px; height: 1px;
+      padding: 0; margin: -1px; overflow: hidden;
+      clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+
+    :focus { outline: none; }
+    :focus-visible {
+      outline: 2px solid var(--cyan);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+    .header-back:focus-visible,
+    .zona:focus-visible,
+    .btn:focus-visible {
+      box-shadow: 0 0 0 2px var(--cyan);
+      outline: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      html { scroll-behavior: auto; }
+    }
+
     body {
       font-family: var(--font-body);
       background: var(--bg-body);
@@ -173,36 +213,40 @@
   </style>
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
 
 <div class="app">
-  <header class="header">
-    <a href="dashboard.html" class="header-back">← Panel</a>
+  <header class="header" role="banner">
+    <a href="dashboard.html" class="header-back" aria-label="Volver al panel">← Panel</a>
     <div class="header-brand">
       <img src="icons/logoEurusblanco.png" alt="EURUS" class="header-logo" />
       <span class="header-title">Importar</span>
     </div>
   </header>
 
-  <div class="card">
-    <div class="card-title">Importar backup EURUS</div>
-    <div class="aviso">
-      ⚠️ Asegúrate de haber configurado el <code>firebase-config.js</code> con los datos
-      de tu nuevo proyecto Firebase antes de importar.
-    </div>
-    <p class="desc">
-      Selecciona el archivo <strong>backup-eurus-*.json</strong> que te enviaron
-      para cargarlo en tu Firebase.
-    </p>
+  <main id="main-content">
+    <section class="card" aria-label="Importar backup EURUS">
+      <h1 class="card-title">Importar backup EURUS</h1>
+      <div class="aviso" role="alert">
+        ⚠️ Asegúrate de haber configurado el <code>firebase-config.js</code> con los datos
+        de tu nuevo proyecto Firebase antes de importar.
+      </div>
+      <p class="desc">
+        Selecciona el archivo <strong>backup-eurus-*.json</strong> que te enviaron
+        para cargarlo en tu Firebase.
+      </p>
 
-    <div class="zona" id="zona" onclick="document.getElementById('input-json').click()">
-      📂 Haz clic para seleccionar el archivo <strong>backup-eurus-*.json</strong>
+      <div class="zona" id="zona" role="button" tabindex="0" aria-label="Seleccionar archivo backup">
+        📂 Haz clic para seleccionar el archivo <strong>backup-eurus-*.json</strong>
+      </div>
+      <label for="input-json" class="visually-hidden">Archivo backup JSON</label>
       <input type="file" id="input-json" accept=".json"/>
-    </div>
 
-    <div id="info-archivo" style="display:none;"></div>
-    <button class="btn" id="btn-importar" style="display:none">Importar a Firebase</button>
-    <div class="log" id="log">Esperando archivo...</div>
-  </div>
+      <div id="info-archivo" style="display:none;" aria-live="polite"></div>
+      <button class="btn" id="btn-importar" style="display:none">Importar a Firebase</button>
+      <div class="log" id="log" aria-live="polite">Esperando archivo...</div>
+    </section>
+  </main>
 </div>
 
 <script type="module">
@@ -215,6 +259,11 @@
   const log = msg => { document.getElementById("log").textContent += "\n" + msg; };
 
   let backupData = null;
+
+  const zona = document.getElementById("zona");
+  const inp  = document.getElementById("input-json");
+  zona.addEventListener("click", () => inp.click());
+  zona.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); inp.click(); } });
 
   function isoATimestamp(val) {
     if (!val) return null;

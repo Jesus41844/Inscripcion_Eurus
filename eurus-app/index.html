@@ -16,12 +16,44 @@
       --green:         #00e676;
       --text-primary:  #e4e8f0;
       --text-secondary:#8895b3;
-      --text-muted:    #4a5a7a;
+      --text-muted:    #7e8ba8;
       --font-display:  'Syne', sans-serif;
       --font-body:     'Outfit', sans-serif;
       --radius:        20px;
       --radius-sm:     10px;
     }
+    html { scroll-behavior: smooth; }
+
+    .skip-link {
+      position: absolute; top: -100%; left: 8px; z-index: 10000;
+      background: var(--cyan); color: var(--bg-body);
+      font-family: var(--font-body); font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+      text-decoration: none; transition: top 0.2s ease;
+    }
+    .skip-link:focus { top: 0; }
+
+    :focus { outline: none; }
+    :focus-visible {
+      outline: 2px solid var(--cyan);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+    .btn-google:focus-visible {
+      box-shadow: 0 0 0 2px var(--cyan);
+      outline: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      html { scroll-behavior: auto; }
+    }
+
     body {
       font-family: var(--font-body);
       min-height: 100vh;
@@ -121,18 +153,21 @@
   </style>
 </head>
 <body>
-  <div class="login-box">
-    <div class="logo-wrap">
-      <img src="icons/logoEurusblanco.png" alt="EURUS"/>
-      <p>Portal de Inscripciones y Certificados</p>
-    </div>
+  <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
 
-    <div class="alerta alerta-error" id="msg-error"></div>
-    <div class="alerta alerta-aviso" id="msg-aviso"></div>
+  <main id="main-content">
+    <div class="login-box">
+      <div class="logo-wrap">
+        <img src="icons/logoEurusblanco.png" alt="EURUS"/>
+        <p>Portal de Inscripciones y Certificados</p>
+      </div>
 
-    <div class="divider"><span>Inicia sesión con tu cuenta</span></div>
+      <div class="alerta alerta-error" id="msg-error" role="alert"></div>
+      <div class="alerta alerta-aviso" id="msg-aviso" role="alert"></div>
 
-    <button class="btn-google" id="btn-google">
+      <div class="divider" role="separator" aria-orientation="horizontal"><span>Inicia sesión con tu cuenta</span></div>
+
+      <button class="btn-google" id="btn-google">
       <svg width="20" height="20" viewBox="0 0 48 48" style="flex-shrink:0">
         <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
         <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
@@ -143,7 +178,8 @@
     </button>
 
     <p class="nota">Acceso exclusivo para coordinadores de <strong>EURUS</strong>.<br>Si eres nuevo, un administrador debe activar tu acceso.</p>
-  </div>
+    </div>
+  </main>
 
   <script type="module">
     import { loginConGoogle, guardRoute } from "./js/auth.js";

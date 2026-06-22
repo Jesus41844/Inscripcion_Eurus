@@ -2,7 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>EURUS — Scanner</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -34,7 +34,7 @@
         --red-dim:       rgba(255, 23, 68, 0.12);
         --text-primary:  #e4e8f0;
         --text-secondary:#8895b3;
-        --text-muted:    #4a5a7a;
+        --text-muted:    #7e8ba8;
         --font-display:  'Syne', sans-serif;
         --font-body:     'Outfit', sans-serif;
         --font-mono:     'JetBrains Mono', monospace;
@@ -44,7 +44,39 @@
         --radius-sm:     10px;
       }
 
+      html { scroll-behavior: smooth; }
+
       html, body { height: 100%; }
+
+      /* ─── Skip link ──────────────────────────────────────────────────────── */
+      .skip-link {
+        position: absolute;
+        top: -100%;
+        left: 8px;
+        z-index: 10000;
+        background: var(--cyan);
+        color: var(--bg-deep);
+        font-family: var(--font-body);
+        font-weight: 600;
+        padding: 10px 20px;
+        border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+        text-decoration: none;
+        transition: top 0.2s var(--ease-out);
+      }
+      .skip-link:focus {
+        top: 0;
+      }
+
+      /* ─── Visually hidden (accessible label) ──────────────────────────────── */
+      .visually-hidden {
+        position: absolute;
+        width: 1px; height: 1px;
+        padding: 0; margin: -1px;
+        overflow: hidden;
+        clip: rect(0,0,0,0);
+        white-space: nowrap;
+        border: 0;
+      }
 
       body {
         font-family: var(--font-body);
@@ -592,7 +624,7 @@
         animation-delay: 0.2s;
       }
 
-      .log-title {
+      h2.log-title {
         font-family: var(--font-display);
         font-weight: 600;
         font-size: 11px;
@@ -600,6 +632,11 @@
         letter-spacing: 1.2px;
         color: var(--text-muted);
         margin-bottom: 12px;
+      }
+
+      .tabla-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
       }
 
       .log-section table {
@@ -674,6 +711,33 @@
         .app { padding-top: 24px; }
       }
 
+      /* ─── Focus-visible ──────────────────────────────────────────────────── */
+      :focus { outline: none; }
+
+      :focus-visible {
+        outline: 2px solid var(--cyan);
+        outline-offset: 2px;
+        border-radius: 4px;
+      }
+
+      .btn:focus-visible,
+      .cp-card:focus-visible,
+      .header-back:focus-visible {
+        box-shadow: 0 0 0 2px var(--cyan);
+        outline: none;
+      }
+
+      /* ─── Reduced motion ──────────────────────────────────────────────────── */
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+        .scanline { display: none; }
+        html { scroll-behavior: auto; }
+      }
+
       /* ─── Scrollbar ──────────────────────────────────────────────────────── */
       ::-webkit-scrollbar { width: 4px; }
       .log-section ::-webkit-scrollbar-track { background: transparent; }
@@ -681,15 +745,18 @@
     </style>
   </head>
   <body>
+    <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+
     <div class="app">
       <!-- ─── Header ──────────────────────────────────────────────────────── -->
-      <header class="header">
-        <a href="inscripciones.html" class="header-back">← Inscripciones</a>
+      <header class="header" role="banner">
+        <a href="inscripciones.html" class="header-back" aria-label="Volver a inscripciones">← Inscripciones</a>
         <div class="header-brand">
           <img src="icons/logoEurusblanco.png" alt="EURUS" class="header-logo" />
           <span class="header-title">Scanner</span>
         </div>
         <div class="header-event">
+          <label for="sel-evento-qr" class="visually-hidden">Seleccionar evento</label>
           <select id="sel-evento-qr">
             <option value="">Seleccionar evento</option>
           </select>
@@ -697,72 +764,76 @@
       </header>
 
       <!-- ─── Toast ───────────────────────────────────────────────────────── -->
-      <div id="alerta" class="toast"></div>
+      <div id="alerta" class="toast" role="alert" aria-live="polite"></div>
 
       <!-- ─── CP Section ──────────────────────────────────────────────────── -->
-      <div id="cp-section" class="cp-section" style="display:none">
-        <div class="cp-label">Checkpoint activo</div>
-        <div class="cp-grid" id="cp-grid"></div>
-        <div class="cp-selected" id="cp-seleccionado"></div>
-      </div>
+      <section id="cp-section" class="cp-section" style="display:none" aria-label="Selección de checkpoint">
+        <div class="cp-label" id="cp-label">Checkpoint activo</div>
+        <div class="cp-grid" id="cp-grid" role="radiogroup" aria-labelledby="cp-label"></div>
+        <div class="cp-selected" id="cp-seleccionado" aria-live="polite"></div>
+      </section>
 
       <!-- ─── Scanner ─────────────────────────────────────────────────────── -->
-      <div class="scanner-frame">
-        <div class="scanner-view" id="scanner-activo">
-          <div id="reader"></div>
-          <div class="bracket bracket-tl"></div>
-          <div class="bracket bracket-tr"></div>
-          <div class="bracket bracket-bl"></div>
-          <div class="bracket bracket-br"></div>
-          <div class="scanline"></div>
+      <main id="main-content">
+        <div class="scanner-frame">
+          <div class="scanner-view" id="scanner-activo">
+            <div id="reader"></div>
+            <div class="bracket bracket-tl" aria-hidden="true"></div>
+            <div class="bracket bracket-tr" aria-hidden="true"></div>
+            <div class="bracket bracket-bl" aria-hidden="true"></div>
+            <div class="bracket bracket-br" aria-hidden="true"></div>
+            <div class="scanline" aria-hidden="true"></div>
+          </div>
         </div>
-      </div>
 
-      <canvas id="capture-canvas" style="display:none"></canvas>
+        <canvas id="capture-canvas" style="display:none"></canvas>
 
-      <div class="controls">
-        <button class="btn btn-primary" id="btn-iniciar">▶ Iniciar cámara</button>
-        <button class="btn btn-outline btn-sm" id="btn-detener" style="display:none">⏹ Detener</button>
-        <button class="btn btn-outline btn-sm" id="btn-cambiar-camara" style="display:none">🔄 Cambiar</button>
-      </div>
-
-      <!-- ─── Result Panel ────────────────────────────────────────────────── -->
-      <div id="resultado-box" class="result-panel">
-        <div class="result-header">
-          <span id="res-estado-badge" class="estado-badge"></span>
+        <div class="controls" role="toolbar" aria-label="Control de cámara">
+          <button class="btn btn-primary" id="btn-iniciar">▶ Iniciar cámara</button>
+          <button class="btn btn-outline btn-sm" id="btn-detener" style="display:none">⏹ Detener</button>
+          <button class="btn btn-outline btn-sm" id="btn-cambiar-camara" style="display:none">🔄 Cambiar</button>
         </div>
-        <div class="result-name" id="res-nombre"></div>
-        <div class="result-details">
-          <div class="result-row"><span>Correo</span><span id="res-correo"></span></div>
-          <div class="result-row"><span>Cédula</span><span id="res-cedula"></span></div>
-          <div class="result-row"><span>Universidad</span><span id="res-universidad"></span></div>
-          <div class="result-row"><span>Carrera</span><span id="res-carrera"></span></div>
-        </div>
-        <div class="result-asistencias" id="res-asistencias-actuales"></div>
-        <div class="result-actions">
-          <button class="btn btn-primary" id="btn-confirmar-asistencia">✅ Confirmar asistencia</button>
-          <button class="btn btn-outline btn-sm" id="btn-cancelar-scan">Cancelar</button>
-        </div>
-      </div>
 
-      <!-- ─── Log ─────────────────────────────────────────────────────────── -->
-      <div class="log-section">
-        <div class="log-title">Registros de la sesión</div>
-        <table>
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Checkpoint</th>
-              <th>Hora</th>
-            </tr>
-          </thead>
-          <tbody id="log-recientes">
-            <tr>
-              <td colspan="3" style="text-align:center; color:var(--text-muted); padding:24px;">Sin registros aún</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+        <!-- ─── Result Panel ────────────────────────────────────────────────── -->
+        <div id="resultado-box" class="result-panel" role="dialog" aria-modal="true" aria-label="Resultado del escaneo">
+          <div class="result-header">
+            <span id="res-estado-badge" class="estado-badge"></span>
+          </div>
+          <div class="result-name" id="res-nombre"></div>
+          <div class="result-details">
+            <div class="result-row"><span>Correo</span><span id="res-correo"></span></div>
+            <div class="result-row"><span>Cédula</span><span id="res-cedula"></span></div>
+            <div class="result-row"><span>Universidad</span><span id="res-universidad"></span></div>
+            <div class="result-row"><span>Carrera</span><span id="res-carrera"></span></div>
+          </div>
+          <div class="result-asistencias" id="res-asistencias-actuales"></div>
+          <div class="result-actions">
+            <button class="btn btn-primary" id="btn-confirmar-asistencia">✅ Confirmar asistencia</button>
+            <button class="btn btn-outline btn-sm" id="btn-cancelar-scan">Cancelar</button>
+          </div>
+        </div>
+
+        <!-- ─── Log ─────────────────────────────────────────────────────────── -->
+        <section class="log-section" aria-label="Registros de la sesión">
+          <h2 class="log-title">Registros de la sesión</h2>
+          <div class="tabla-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Nombre</th>
+                  <th scope="col">Checkpoint</th>
+                  <th scope="col">Hora</th>
+                </tr>
+              </thead>
+              <tbody id="log-recientes">
+                <tr>
+                  <td colspan="3" style="text-align:center; color:var(--text-muted); padding:24px;">Sin registros aún</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
     </div>
 
     <!-- ─── JS ────────────────────────────────────────────────────────────── -->

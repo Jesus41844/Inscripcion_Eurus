@@ -27,7 +27,7 @@
       --red-dim:       rgba(255, 23, 68, 0.12);
       --text-primary:  #e4e8f0;
       --text-secondary:#8895b3;
-      --text-muted:    #4a5a7a;
+      --text-muted:    #7e8ba8;
       --font-display:  'Syne', sans-serif;
       --font-body:     'Outfit', sans-serif;
       --ease-out:      cubic-bezier(0.22, 1, 0.36, 1);
@@ -36,7 +36,56 @@
       --radius-sm:     10px;
     }
 
+    html { scroll-behavior: smooth; }
+
     html, body { height: 100%; }
+
+    .skip-link {
+      position: absolute;
+      top: -100%;
+      left: 8px;
+      z-index: 10000;
+      background: var(--cyan);
+      color: var(--bg-deep);
+      font-family: var(--font-body);
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+      text-decoration: none;
+      transition: top 0.2s var(--ease-out);
+    }
+    .skip-link:focus { top: 0; }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    :focus { outline: none; }
+    :focus-visible {
+      outline: 2px solid var(--cyan);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+    .header-btn:focus-visible,
+    .access-card:focus-visible {
+      box-shadow: 0 0 0 2px var(--cyan);
+      outline: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      html { scroll-behavior: auto; }
+    }
 
     body {
       font-family: var(--font-body);
@@ -149,13 +198,13 @@
       pointer-events: none;
     }
 
-    .welcome-saludo {
+    .welcome p.welcome-saludo {
       font-size: 13px;
       color: var(--text-muted);
       margin-bottom: 2px;
     }
 
-    .welcome-nombre {
+    h1.welcome-nombre {
       font-family: var(--font-display);
       font-weight: 700;
       font-size: 20px;
@@ -245,7 +294,7 @@
       line-height: 1;
     }
 
-    .access-label {
+    h2.access-label {
       font-family: var(--font-display);
       font-weight: 700;
       font-size: 18px;
@@ -311,44 +360,47 @@
   </style>
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
 
 <div class="app">
   <!-- ─── Header ────────────────────────────────────────────────────────── -->
-  <header class="header">
+  <header class="header" role="banner">
     <div class="header-brand">
       <img src="icons/logoEurusblanco.png" alt="EURUS" class="header-logo" />
       <span class="header-title">Panel</span>
     </div>
     <div class="header-actions">
-      <button class="header-btn" id="btn-logout">Salir</button>
+      <button class="header-btn" id="btn-logout" aria-label="Cerrar sesión">Salir</button>
     </div>
   </header>
 
-  <!-- ─── Welcome ───────────────────────────────────────────────────────── -->
-  <div class="welcome">
-    <div class="welcome-saludo">Bienvenido,</div>
-    <div class="welcome-nombre" id="nombre-usuario">...</div>
-    <span class="rol-pill" id="rol-label">EURUS</span>
-  </div>
+  <main id="main-content">
+    <!-- ─── Welcome ───────────────────────────────────────────────────────── -->
+    <section class="welcome" aria-label="Saludo del usuario">
+      <p class="welcome-saludo">Bienvenido,</p>
+      <h1 class="welcome-nombre" id="nombre-usuario">...</h1>
+      <span class="rol-pill" id="rol-label">EURUS</span>
+    </section>
 
-  <!-- ─── Stat ──────────────────────────────────────────────────────────── -->
-  <div class="stat-card" id="stat-inscripciones" style="display:none;">
-    <div class="stat-num" id="stat-num">—</div>
-    <div class="stat-text">
-      <strong id="stat-evento-nombre">Cargando...</strong>
-      participantes inscritos en el evento activo
-    </div>
-  </div>
+    <!-- ─── Stat ──────────────────────────────────────────────────────────── -->
+    <section class="stat-card" id="stat-inscripciones" style="display:none;" aria-label="Total de inscripciones">
+      <div class="stat-num" id="stat-num">—</div>
+      <div class="stat-text">
+        <strong id="stat-evento-nombre">Cargando...</strong>
+        participantes inscritos en el evento activo
+      </div>
+    </section>
 
-  <!-- ─── Access ────────────────────────────────────────────────────────── -->
-  <a href="inscripciones.html" class="access-card">
-    <div class="access-icon">🎓</div>
-    <div class="access-label">Inscripciones EURUS</div>
-    <div class="access-desc">
-      Gestiona los participantes, genera QR, registra asistencia<br/>y emite certificados del evento.
-    </div>
-    <div class="access-btn">Abrir módulo →</div>
-  </a>
+    <!-- ─── Access ────────────────────────────────────────────────────────── -->
+    <a href="inscripciones.html" class="access-card" aria-label="Abrir Inscripciones EURUS">
+      <div class="access-icon" aria-hidden="true">🎓</div>
+      <h2 class="access-label">Inscripciones EURUS</h2>
+      <p class="access-desc">
+        Gestiona los participantes, genera QR, registra asistencia<br/>y emite certificados del evento.
+      </p>
+      <div class="access-btn">Abrir módulo →</div>
+    </a>
+  </main>
 </div>
 
 <script type="module">

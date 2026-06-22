@@ -446,45 +446,7 @@
         min-height: 36px;
       }
 
-      .btn-ghost {
-        background: transparent;
-        border: 1.5px solid var(--border-dim);
-        color: var(--text-muted);
-        font-size: 13px;
-        font-weight: 500;
-        padding: 8px 16px;
-        min-height: 38px;
-        cursor: pointer;
-        transition: background 0.2s, color 0.2s, border-color 0.2s;
-      }
 
-      .btn-ghost:hover {
-        background: var(--bg-card);
-        color: var(--text-secondary);
-        border-color: var(--border-mid);
-      }
-
-      .actions {
-        display: flex;
-        gap: 8px;
-        margin-bottom: 16px;
-        animation: fadeSlideUp 0.45s var(--ease-out) both;
-        animation-delay: 0.15s;
-      }
-
-      .test-qr {
-        display: none;
-        text-align: center;
-        margin-top: 12px;
-        padding: 16px;
-        background: var(--bg-card);
-        border: 1px solid var(--border-dim);
-        border-radius: var(--radius);
-      }
-
-      .test-qr img {
-        display: inline-block;
-      }
 
       /* ─── Result Panel ────────────────────────────────────────────────────── */
       .result-panel {
@@ -671,83 +633,7 @@
         background: var(--bg-elevated);
       }
 
-      /* ─── Console inline ─────────────────────────────────────────────────── */
-      .console-section {
-        margin-top: 12px;
-        border-top: 1px solid var(--border-dim);
-        padding-top: 12px;
-      }
 
-      .console-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        cursor: pointer;
-        user-select: none;
-      }
-
-      .console-label {
-        font-family: var(--font-display);
-        font-weight: 600;
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 1.2px;
-        color: var(--text-muted);
-      }
-
-      .console-toggle {
-        font-size: 11px;
-        color: var(--text-muted);
-        background: none;
-        border: 1px solid var(--border-dim);
-        border-radius: 4px;
-        padding: 2px 8px;
-        cursor: pointer;
-        font-family: var(--font-body);
-        transition: background 0.2s, color 0.2s;
-      }
-
-      .console-toggle:hover {
-        background: var(--bg-hover);
-        color: var(--text-secondary);
-      }
-
-      .console-body {
-        margin-top: 8px;
-        background: rgba(0, 0, 0, 0.35);
-        border: 1px solid var(--border-dim);
-        border-radius: var(--radius-sm);
-        padding: 8px 10px;
-        max-height: 160px;
-        overflow-y: auto;
-        font-family: var(--font-mono);
-        font-size: 11px;
-        line-height: 1.6;
-      }
-
-      #console-logs {
-        display: flex;
-        flex-direction: column;
-        gap: 1px;
-      }
-
-      .console-entry {
-        padding: 1px 4px;
-        border-radius: 2px;
-        word-break: break-all;
-      }
-
-      .console-time {
-        color: var(--text-muted);
-        margin-right: 6px;
-      }
-
-      .console-INFO  { color: #7986cb; }
-      .console-OK    { color: var(--green); }
-      .console-WARN  { color: var(--amber); }
-      .console-ERROR { color: var(--red); }
-      .console-SCAN  { color: var(--cyan); }
-      .console-DETECT{ color: var(--green); font-weight: 600; }
 
       /* ─── Animations ──────────────────────────────────────────────────────── */
       @keyframes fadeSlideUp {
@@ -761,13 +647,27 @@
       }
 
       /* ─── Responsive ──────────────────────────────────────────────────────── */
-      @media (max-width: 420px) {
-        .app { padding: 0 12px 32px; }
-        .controls .btn { font-size: 13px; padding: 10px 14px; }
-        .result-panel { padding: 20px 16px 28px; }
-        .result-name { font-size: 19px; }
+      @media (max-width: 480px) {
+        .app { padding: 0 10px 32px; }
+        .header { gap: 6px; padding: 10px 0; }
+        .header-back { font-size: 12px; padding: 4px 8px; }
+        .header-title { font-size: 12px; }
+        .header-logo { height: 18px; }
+        .header-event { max-width: 140px; }
+        .header-event select { font-size: 11px; padding: 6px 10px; background-position: right 10px center; background-size: 10px; }
+        .controls { gap: 6px; }
+        .controls .btn { font-size: 12px; padding: 8px 10px; min-height: 38px; }
+        .result-panel { padding: 20px 14px 28px; }
+        .result-name { font-size: 18px; }
         .cp-grid { grid-template-columns: 1fr; }
-        .header-event select { font-size: 12px; padding: 8px 12px; }
+        .cp-card { padding: 12px 10px; font-size: 13px; }
+      }
+
+      @media (max-width: 360px) {
+        .header-back { font-size: 11px; padding: 3px 6px; }
+        .header-title { display: none; }
+        .header-event { max-width: 120px; }
+        .header-event select { font-size: 10px; padding: 5px 8px; }
       }
 
       @media (min-width: 600px) {
@@ -775,10 +675,7 @@
       }
 
       /* ─── Scrollbar ──────────────────────────────────────────────────────── */
-      .console-body::-webkit-scrollbar { width: 4px; }
-      .console-body::-webkit-scrollbar-track { background: transparent; }
-      .console-body::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 2px; }
-      .log-section ::-webkit-scrollbar { width: 4px; }
+      ::-webkit-scrollbar { width: 4px; }
       .log-section ::-webkit-scrollbar-track { background: transparent; }
       .log-section ::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 2px; }
     </style>
@@ -829,16 +726,6 @@
         <button class="btn btn-outline btn-sm" id="btn-cambiar-camara" style="display:none">🔄 Cambiar</button>
       </div>
 
-      <div class="actions">
-        <label class="btn-ghost" style="cursor:pointer">
-          📁 Escanear imagen
-          <input type="file" id="input-scan-file" accept="image/*" hidden />
-        </label>
-        <button class="btn-ghost" id="btn-test-qr">🔄 QR prueba</button>
-      </div>
-
-      <div class="test-qr" id="test-qr-wrap"></div>
-
       <!-- ─── Result Panel ────────────────────────────────────────────────── -->
       <div id="resultado-box" class="result-panel">
         <div class="result-header">
@@ -875,16 +762,6 @@
             </tr>
           </tbody>
         </table>
-        <!-- ─── Console ──────────────────────────────────────────────────── -->
-        <div class="console-section">
-          <div class="console-header" id="console-header">
-            <span class="console-label">Consola del sistema</span>
-            <button class="console-toggle" id="console-toggle">Ocultar</button>
-          </div>
-          <div class="console-body" id="console-body">
-            <div id="console-logs"></div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -892,31 +769,9 @@
     <script type="module" src="js/lecturaQR.js"></script>
 
     <script>
-      (function () {
-        try {
-          const logs = document.getElementById("console-logs");
-          const toggle = document.getElementById("console-toggle");
-          const body = document.getElementById("console-body");
-          if (!logs || !toggle || !body) { console.warn("[Console] Elementos no encontrados"); return; }
-          let visible = true;
-          toggle.addEventListener("click", () => {
-            visible = !visible;
-            body.style.display = visible ? "block" : "none";
-            toggle.textContent = visible ? "Ocultar" : "Mostrar";
-          });
-          window.debugLog = function (type, msg) {
-            try {
-              const time = new Date().toLocaleTimeString("es-PA");
-              const div = document.createElement("div");
-              div.className = "console-entry console-" + type;
-              div.innerHTML = '<span class="console-time">' + time + '</span> ' + msg;
-              logs.appendChild(div);
-              if (logs.children.length > 50) logs.removeChild(logs.firstChild);
-              logs.scrollTop = logs.scrollHeight;
-            } catch (e) { console.warn("[Console] Error en log:", e); }
-          };
-        } catch (e) { console.warn("[Console] Error init:", e); }
-      })();
+      window.debugLog = function (type, msg) {
+        console.log("[" + type + "]", msg);
+      };
     </script>
   </body>
 </html>

@@ -4,47 +4,63 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>EURUS — Iniciar Sesión</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg-body:       #080b15;
+      --cyan:          #00d4ff;
+      --cyan-glow:     rgba(0, 212, 255, 0.15);
+      --green:         #00e676;
+      --text-primary:  #e4e8f0;
+      --text-secondary:#8895b3;
+      --text-muted:    #4a5a7a;
+      --font-display:  'Syne', sans-serif;
+      --font-body:     'Outfit', sans-serif;
+      --radius:        20px;
+      --radius-sm:     10px;
+    }
     body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-family: var(--font-body);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(160deg, #0d2d40 0%, #154360 55%, #2471a3 100%);
+      background: var(--bg-body);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      position: relative;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 212, 255, 0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 40% at 20% 100%, rgba(0, 212, 255, 0.03) 0%, transparent 60%);
+      pointer-events: none;
     }
     .login-box {
-      background: #fff;
-      border-radius: 20px;
-      box-shadow: 0 12px 40px rgba(21,67,96,0.30);
+      background: #111728;
+      border: 1px solid #1e2845;
+      border-radius: var(--radius);
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
       padding: 44px 32px 40px;
       width: 100%;
       max-width: 390px;
       margin: 16px;
       text-align: center;
+      position: relative;
+      z-index: 1;
     }
     .logo-wrap { margin-bottom: 20px; }
-    .logo-circle {
-      width: 76px; height: 76px;
-      background: linear-gradient(135deg, #154360 0%, #2471a3 100%);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 14px;
-      font-size: 32px;
-      box-shadow: 0 6px 20px rgba(21,67,96,0.30);
-    }
-    .logo-wrap h2 {
-      font-size: 26px;
-      font-weight: 800;
-      color: #154360;
-      letter-spacing: 2px;
-      margin-bottom: 4px;
-    }
+    .logo-wrap img { height: 40px; opacity: 0.9; margin-bottom: 12px; }
     .logo-wrap p {
       font-size: 13px;
-      color: #7b9ab0;
-      margin-bottom: 0;
+      color: var(--text-muted);
+      line-height: 1.5;
     }
     .divider {
       display: flex;
@@ -56,9 +72,9 @@
       content: '';
       flex: 1;
       height: 1px;
-      background: #c5d9e8;
+      background: #1e2845;
     }
-    .divider span { font-size: 12px; color: #7b9ab0; white-space: nowrap; }
+    .divider span { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
     .btn-google {
       display: flex;
       align-items: center;
@@ -66,26 +82,26 @@
       gap: 12px;
       width: 100%;
       padding: 14px 20px;
-      border: 1.5px solid #c5d9e8;
-      border-radius: 10px;
-      background: #fff;
+      border: 1.5px solid #1e2845;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      font-family: var(--font-body);
       font-size: 15px;
       font-weight: 600;
-      color: #1a2e3e;
+      color: var(--text-primary);
       cursor: pointer;
-      transition: all 0.15s;
+      transition: border-color 0.2s, background 0.2s;
       min-height: 52px;
     }
     .btn-google:hover {
-      border-color: #2471a3;
-      background: #f0f6fb;
-      box-shadow: 0 2px 12px rgba(21,67,96,0.13);
+      border-color: var(--cyan);
+      background: rgba(0, 212, 255, 0.06);
     }
     .btn-google:active { transform: scale(0.98); }
-    .btn-google:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-google:disabled { opacity: 0.4; cursor: not-allowed; }
     .alerta {
       padding: 11px 14px;
-      border-radius: 8px;
+      border-radius: var(--radius-sm);
       font-size: 13px;
       margin-bottom: 16px;
       display: none;
@@ -93,23 +109,21 @@
       line-height: 1.4;
     }
     .alerta.show { display: block; }
-    .alerta-error { background: #fdedec; color: #c0392b; border-left: 4px solid #c0392b; }
-    .alerta-aviso { background: #eaf4fb; color: #1a5276; border-left: 4px solid #2471a3; }
+    .alerta-error { background: rgba(255, 23, 68, 0.12); color: #ff1744; border-left: 4px solid #ff1744; }
+    .alerta-aviso { background: rgba(0, 212, 255, 0.08); color: var(--cyan); border-left: 4px solid var(--cyan); }
     .nota {
       font-size: 12px;
-      color: #aaa;
+      color: var(--text-muted);
       margin-top: 24px;
       line-height: 1.6;
     }
-    .nota strong { color: #2471a3; }
+    .nota strong { color: var(--cyan); }
   </style>
 </head>
 <body>
   <div class="login-box">
     <div class="logo-wrap">
-      <div>
-        <img src="icons/logoEurus.png" alt="EURUS" style="height:45px;"/>
-      </div>
+      <img src="icons/logoEurusblanco.png" alt="EURUS"/>
       <p>Portal de Inscripciones y Certificados</p>
     </div>
 
@@ -156,7 +170,6 @@
           btn.disabled = false;
           btn.childNodes[1].textContent = " Continuar con Google";
 
-          // Escuchar en tiempo real — cuando el admin asigne rol, redirigir
           const uid = sessionStorage.getItem("uid");
           if (uid) {
             const { db } = await import("./js/firebase-config.js");

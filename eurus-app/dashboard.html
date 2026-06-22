@@ -3,62 +3,221 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>EURUS — Panel Principal</title>
-  <link rel="stylesheet" href="css/styles.css"/>
+  <title>EURUS — Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <style>
-    /* ── Paleta EURUS: azul oscuro ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
     :root {
-      --eurus:        #154360;
-      --eurus-medio:  #1a5276;
-      --eurus-claro:  #2471a3;
-      --eurus-fondo:  #d6eaf8;
-      --eurus-sombra: rgba(21, 67, 96, 0.20);
+      --bg-deep:       #080b15;
+      --bg-body:       #0c101f;
+      --bg-card:       #111728;
+      --bg-elevated:   #182035;
+      --bg-hover:      #1f2a45;
+      --border-dim:    #1e2845;
+      --border-mid:    #2c3a60;
+      --cyan:          #00d4ff;
+      --cyan-glow:     rgba(0, 212, 255, 0.12);
+      --green:         #00e676;
+      --green-dim:     rgba(0, 230, 118, 0.12);
+      --amber:         #ffc107;
+      --red:           #ff1744;
+      --red-dim:       rgba(255, 23, 68, 0.12);
+      --text-primary:  #e4e8f0;
+      --text-secondary:#8895b3;
+      --text-muted:    #4a5a7a;
+      --font-display:  'Syne', sans-serif;
+      --font-body:     'Outfit', sans-serif;
+      --ease-out:      cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);
+      --radius:        16px;
+      --radius-sm:     10px;
     }
 
-    .topbar {
-      background: linear-gradient(135deg, var(--eurus) 0%, var(--eurus-claro) 100%);
-      box-shadow: 0 2px 12px var(--eurus-sombra);
+    html, body { height: 100%; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-body);
+      color: var(--text-primary);
+      font-size: 15px;
+      line-height: 1.5;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
     }
 
-    .bienvenida {
-      background: linear-gradient(135deg, var(--eurus) 0%, var(--eurus-claro) 100%);
-      color: #fff;
-      border-radius: 16px;
-      padding: 24px 20px;
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 212, 255, 0.04) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 40% at 20% 100%, rgba(0, 212, 255, 0.02) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 0 16px 40px;
+      min-height: 100vh;
+    }
+
+    /* ─── Header ─────────────────────────────────────────────────────────── */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 0 12px;
+      border-bottom: 1px solid var(--border-dim);
       margin-bottom: 24px;
-      box-shadow: 0 8px 28px var(--eurus-sombra);
+      animation: fadeSlideDown 0.5s var(--ease-out) both;
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .header-logo {
+      height: 22px;
+      opacity: 0.85;
+    }
+
+    .header-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    .header-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-btn {
+      background: transparent;
+      border: 1.5px solid var(--border-dim);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+
+    .header-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+      border-color: var(--border-mid);
+    }
+
+    /* ─── Welcome ──────────────────────────────────────────────────────────── */
+    .welcome {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dim);
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      margin-bottom: 20px;
       position: relative;
       overflow: hidden;
-      animation: fadeScaleIn 0.5s var(--ease-spring) both;
+      animation: fadeSlideUp 0.45s var(--ease-out) both;
     }
-    .bienvenida::after {
-      content: '🎓';
+
+    .welcome::before {
+      content: '';
       position: absolute;
-      right: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 64px;
-      opacity: 0.10;
+      top: 0;
+      right: 0;
+      width: 120px;
+      height: 120px;
+      background: radial-gradient(circle, var(--cyan-glow) 0%, transparent 70%);
+      pointer-events: none;
     }
-    .bienvenida .saludo  { font-size: 13px; opacity: 0.8; }
-    .bienvenida .nombre  { font-size: 22px; font-weight: 700; margin: 4px 0 12px; }
+
+    .welcome-saludo {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    .welcome-nombre {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 20px;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+    }
+
     .rol-pill {
       display: inline-block;
-      background: rgba(255,255,255,0.2);
-      border: 1px solid rgba(255,255,255,0.3);
-      padding: 4px 14px;
+      background: rgba(0, 212, 255, 0.08);
+      border: 1px solid rgba(0, 212, 255, 0.2);
+      color: var(--cyan);
+      padding: 3px 12px;
       border-radius: 20px;
-      font-size: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ─── Stat ──────────────────────────────────────────────────────────────── */
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dim);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      animation: fadeSlideUp 0.45s var(--ease-out) both;
+      animation-delay: 0.08s;
+    }
+
+    .stat-num {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 32px;
+      color: var(--cyan);
+      line-height: 1;
+      min-width: 48px;
+    }
+
+    .stat-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .stat-text strong {
+      display: block;
+      font-size: 14px;
+      color: var(--text-primary);
       font-weight: 600;
     }
 
-    /* ── Tarjeta de acceso única ── */
-    .acceso-card {
-      background: #fff;
-      border-radius: 20px;
-      box-shadow: 0 4px 20px var(--eurus-sombra);
-      border-bottom: 4px solid var(--eurus-claro);
-      padding: 36px 24px;
+    /* ─── Access Card ──────────────────────────────────────────────────────── */
+    .access-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dim);
+      border-radius: var(--radius);
+      padding: 32px 24px;
       text-align: center;
       text-decoration: none;
       display: flex;
@@ -66,96 +225,130 @@
       align-items: center;
       gap: 14px;
       cursor: pointer;
-      transition: transform 0.2s var(--ease-spring), box-shadow 0.2s;
-      animation: cardCascade 0.42s var(--ease-spring) both;
-      animation-delay: 0.18s;
-      opacity: 0;
+      transition: transform 0.2s var(--ease-spring), border-color 0.3s, box-shadow 0.3s;
+      animation: fadeSlideUp 0.45s var(--ease-out) both;
+      animation-delay: 0.14s;
     }
-    .acceso-card:hover {
-      transform: translateY(-6px) scale(1.02);
-      box-shadow: 0 12px 32px var(--eurus-sombra);
-    }
-    .acceso-card:active { transform: scale(0.95); }
-    .acceso-card .icono { font-size: 52px; line-height: 1; }
-    .acceso-card .label {
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--eurus);
-    }
-    .acceso-card .desc {
-      font-size: 13px;
-      color: var(--gris-medio);
-      line-height: 1.5;
-    }
-    .acceso-card .btn-entrar {
-      background: linear-gradient(135deg, var(--eurus-medio) 0%, var(--eurus-claro) 100%);
-      color: #fff;
-      padding: 12px 32px;
-      border-radius: 24px;
-      font-size: 15px;
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-      margin-top: 8px;
-      box-shadow: 0 4px 12px var(--eurus-sombra);
-      transition: opacity 0.2s;
-    }
-    .acceso-card .btn-entrar:hover { opacity: 0.88; }
 
-    /* ── Stat mini inscripciones ── */
-    .stat-eurus {
-      background: var(--eurus-fondo);
-      border-radius: var(--radio);
-      padding: 14px 20px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 20px;
-      animation: cardCascade 0.4s var(--ease-spring) both;
-      animation-delay: 0.10s;
-      opacity: 0;
+    .access-card:hover {
+      transform: translateY(-4px) scale(1.01);
+      border-color: var(--border-mid);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     }
-    .stat-eurus .num { font-size: 28px; font-weight: 700; color: var(--eurus); }
-    .stat-eurus .txt { font-size: 13px; color: var(--eurus-medio); }
-    .stat-eurus .txt strong { display: block; font-size: 15px; }
+
+    .access-card:active {
+      transform: scale(0.97);
+    }
+
+    .access-icon {
+      font-size: 44px;
+      line-height: 1;
+    }
+
+    .access-label {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--text-primary);
+    }
+
+    .access-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      max-width: 280px;
+    }
+
+    .access-btn {
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(0, 212, 255, 0.08));
+      border: 1.5px solid var(--cyan);
+      color: var(--cyan);
+      padding: 10px 28px;
+      border-radius: 24px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 4px;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+
+    .access-btn:hover {
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.3), rgba(0, 212, 255, 0.12));
+      box-shadow: 0 0 24px var(--cyan-glow);
+    }
+
+    /* ─── Animations ──────────────────────────────────────────────────────── */
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeSlideDown {
+      from { opacity: 0; transform: translateY(-12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── Responsive ──────────────────────────────────────────────────────── */
+    @media (max-width: 480px) {
+      .app { padding: 0 12px 32px; }
+      .header { gap: 6px; padding: 10px 0; margin-bottom: 16px; }
+      .header-logo { height: 18px; }
+      .header-title { font-size: 12px; }
+      .header-btn { font-size: 11px; padding: 4px 10px; }
+      .welcome { padding: 18px 16px; }
+      .welcome-nombre { font-size: 17px; }
+      .access-card { padding: 24px 18px; }
+      .access-icon { font-size: 36px; }
+      .access-label { font-size: 16px; }
+    }
+
+    @media (max-width: 360px) {
+      .header-title { display: none; }
+      .stat-card { flex-direction: column; text-align: center; gap: 8px; }
+      .stat-num { font-size: 28px; }
+    }
   </style>
 </head>
 <body>
 
-<div class="topbar">
-  <img src="icons/logoEurusblanco.png" alt="EURUS" style="height:28px;"/>
-  <h1>EURUS</h1>
-  <button class="btn-logout" id="btn-logout">Salir</button>
-</div>
+<div class="app">
+  <!-- ─── Header ────────────────────────────────────────────────────────── -->
+  <header class="header">
+    <div class="header-brand">
+      <img src="icons/logoEurusblanco.png" alt="EURUS" class="header-logo" />
+      <span class="header-title">Panel</span>
+    </div>
+    <div class="header-actions">
+      <button class="header-btn" id="btn-logout">Salir</button>
+    </div>
+  </header>
 
-<div class="container">
-
-  <!-- BIENVENIDA -->
-  <div class="bienvenida">
-    <div class="saludo">Bienvenido,</div>
-    <div class="nombre" id="nombre-usuario">...</div>
+  <!-- ─── Welcome ───────────────────────────────────────────────────────── -->
+  <div class="welcome">
+    <div class="welcome-saludo">Bienvenido,</div>
+    <div class="welcome-nombre" id="nombre-usuario">...</div>
     <span class="rol-pill" id="rol-label">EURUS</span>
   </div>
 
-  <!-- STAT RÁPIDA -->
-  <div class="stat-eurus" id="stat-inscripciones" style="display:none;">
-    <div class="num" id="stat-num">—</div>
-    <div class="txt">
+  <!-- ─── Stat ──────────────────────────────────────────────────────────── -->
+  <div class="stat-card" id="stat-inscripciones" style="display:none;">
+    <div class="stat-num" id="stat-num">—</div>
+    <div class="stat-text">
       <strong id="stat-evento-nombre">Cargando...</strong>
       participantes inscritos en el evento activo
     </div>
   </div>
 
-  <!-- ACCESO PRINCIPAL -->
-  <a href="inscripciones.html" class="acceso-card">
-    <div class="icono">🎓</div>
-    <div class="label">Inscripciones EURUS</div>
-    <div class="desc">
+  <!-- ─── Access ────────────────────────────────────────────────────────── -->
+  <a href="inscripciones.html" class="access-card">
+    <div class="access-icon">🎓</div>
+    <div class="access-label">Inscripciones EURUS</div>
+    <div class="access-desc">
       Gestiona los participantes, genera QR, registra asistencia<br/>y emite certificados del evento.
     </div>
-    <button class="btn-entrar">Abrir módulo →</button>
+    <div class="access-btn">Abrir módulo →</div>
   </a>
-
 </div>
 
 <script type="module">
@@ -171,7 +364,6 @@
   const usuario = getUsuarioActual();
   const info    = infoRol(usuario.rol || "eurus");
 
-  // Redirigir si no tiene rol válido de Eurus
   if (usuario.rol && usuario.rol !== "eurus" && usuario.rol !== "sin_rol") {
     window.location.href = "index.html";
   }
@@ -179,7 +371,6 @@
   document.getElementById("nombre-usuario").textContent = usuario.nombre || "Usuario";
   document.getElementById("rol-label").textContent      = info.label || "EURUS";
 
-  // Cargar stat del evento activo más reciente
   async function cargarStatEvento() {
     try {
       const snapEv = await getDocs(
@@ -192,11 +383,11 @@
         query(collection(db, "inscripciones_eurus"), where("eventoId","==", snapEv.docs[0].id))
       );
 
-      document.getElementById("stat-num").textContent          = snapIns.size;
+      document.getElementById("stat-num").textContent           = snapIns.size;
       document.getElementById("stat-evento-nombre").textContent = evento.nombre;
       document.getElementById("stat-inscripciones").style.display = "flex";
     } catch (e) {
-      // Sin datos disponibles — silencioso
+      // Sin datos
     }
   }
 

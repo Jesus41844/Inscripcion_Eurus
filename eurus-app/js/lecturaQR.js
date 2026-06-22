@@ -336,47 +336,6 @@ function renderLog() {
     </tr>`).join("");
 }
 
-// ─── QR de prueba ────────────────────────────────────────────────────────────
-el("btn-test-qr").addEventListener("click", async () => {
-  const wrap = el("test-qr-wrap");
-  wrap.style.display = "block";
-  wrap.innerHTML = "";
-  const testId = "TEST-" + Date.now();
-  new QRCode(wrap, {
-    text: testId,
-    width: 240,
-    height: 240,
-    colorDark: "#000000",
-    colorLight: "#ffffff",
-    correctLevel: QRCode.CorrectLevel.H,
-  });
-  const p = document.createElement("p");
-  p.style.marginTop = "8px";
-  p.style.fontSize = "12px";
-  p.style.color = "var(--gris-medio)";
-  p.innerHTML = `Texto del QR: <code>${testId}</code><br><br>
-    <strong>Para probar con cámara:</strong> muestra este QR en <strong>otro dispositivo</strong> (teléfono) y apunta la cámara.<br>
-    <strong>Para probar sin dos dispositivos:</strong> toma un <strong>captura de pantalla</strong> y súbela con "📁 Escanear desde imagen"`;
-  wrap.appendChild(p);
-  console.log("[QR] QR de prueba generado con texto:", testId);
-});
-
-// ─── Escanear desde archivo ──────────────────────────────────────────────────
-el("input-scan-file").addEventListener("change", async e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  try {
-    const tempScanner = new Html5Qrcode("reader");
-    const result = await tempScanner.scanFileV2(file, true);
-    console.log("[QR] Escaneo desde archivo exitoso:", result);
-    onScanExito(result.decodedText);
-  } catch (err) {
-    console.error("[QR] Error escaneando archivo:", err);
-    alerta("error", "No se pudo leer el QR de la imagen: " + err);
-  }
-  el("input-scan-file").value = "";
-});
-
 // ─── Esperar rol ──────────────────────────────────────────────────────────────
 async function esperarRol() {
   for (let i = 0; i < 15; i++) {

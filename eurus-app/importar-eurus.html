@@ -2,118 +2,299 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8"/>
-  <title>Importar datos EURUS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EURUS — Importar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <style>
-    body { font-family: 'Segoe UI', sans-serif; max-width: 560px; margin: 60px auto; padding: 0 20px; }
-    h2   { color: #154360; }
-    .zona { border: 2px dashed #2471a3; border-radius: 10px; padding: 36px 20px; text-align: center; cursor: pointer; background: #f0f6fb; margin: 16px 0; }
-    .zona:hover { background: #d6eaf8; }
-    .btn { background: #154360; color: #fff; border: none; padding: 14px 28px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 8px; display: block; width: 100%; }
-    .btn:hover { background: #2471a3; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .log { background: #f0f6fb; border-radius: 8px; padding: 16px; margin-top: 20px; font-size: 13px; color: #1a2e3e; line-height: 1.8; min-height: 60px; white-space: pre-wrap; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg-body:       #0c101f;
+      --bg-card:       #111728;
+      --bg-elevated:   #182035;
+      --border-dim:    #1e2845;
+      --cyan:          #00d4ff;
+      --cyan-glow:     rgba(0, 212, 255, 0.12);
+      --green:         #00e676;
+      --green-dim:     rgba(0, 230, 118, 0.12);
+      --amber:         #ffc107;
+      --amber-dim:     rgba(255, 193, 7, 0.12);
+      --red:           #ff1744;
+      --text-primary:  #e4e8f0;
+      --text-secondary:#8895b3;
+      --text-muted:    #4a5a7a;
+      --font-display:  'Syne', sans-serif;
+      --font-body:     'Outfit', sans-serif;
+      --radius:        16px;
+      --radius-sm:     10px;
+      --ease-out:      cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-body);
+      color: var(--text-primary);
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 212, 255, 0.04) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 40% at 20% 100%, rgba(0, 212, 255, 0.02) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .app {
+      position: relative;
+      z-index: 1;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 0 16px 40px;
+      min-height: 100vh;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 0 12px;
+      border-bottom: 1px solid var(--border-dim);
+      margin-bottom: 24px;
+    }
+    .header-back {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      transition: background 0.2s, color 0.2s;
+    }
+    .header-back:hover {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+    }
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-logo { height: 22px; opacity: 0.85; }
+    .header-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dim);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--cyan);
+      margin-bottom: 16px;
+    }
+    .aviso {
+      background: var(--amber-dim);
+      border-left: 4px solid var(--amber);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-size: 13px;
+      color: var(--amber);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    .aviso code { font-size: 12px; opacity: 0.8; }
+    .desc { color: var(--text-muted); font-size: 14px; margin-bottom: 16px; line-height: 1.5; }
+    .zona {
+      border: 2px dashed var(--border-dim);
+      border-radius: var(--radius);
+      padding: 36px 20px;
+      text-align: center;
+      cursor: pointer;
+      background: var(--bg-card);
+      color: var(--text-muted);
+      transition: border-color 0.2s, background 0.2s;
+      margin-bottom: 16px;
+    }
+    .zona:hover { border-color: var(--cyan); background: var(--cyan-glow); }
+    .btn {
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(0, 212, 255, 0.08));
+      border: 1.5px solid var(--cyan);
+      color: var(--cyan);
+      padding: 12px 28px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: block;
+      width: 100%;
+      text-align: center;
+      transition: background 0.2s, box-shadow 0.2s;
+      margin-bottom: 16px;
+    }
+    .btn:hover {
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.3), rgba(0, 212, 255, 0.12));
+      box-shadow: 0 0 24px var(--cyan-glow);
+    }
+    .btn:disabled { opacity: 0.3; cursor: not-allowed; box-shadow: none; }
+    .log {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border-dim);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      font-size: 12px;
+      font-family: monospace;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      min-height: 60px;
+      white-space: pre-wrap;
+    }
+    #info-archivo { font-size: 13px; color: var(--cyan); margin-bottom: 8px; }
     input[type=file] { display: none; }
-    .aviso { background: #fff3cd; border-left: 4px solid #e6a817; border-radius: 6px; padding: 12px 16px; font-size: 13px; color: #6b4a00; margin-bottom: 16px; }
+
+    @media (max-width: 480px) {
+      .app { padding: 0 12px 32px; }
+      .header { padding: 10px 0; }
+      .header-title { font-size: 12px; }
+      .header-logo { height: 18px; }
+    }
   </style>
 </head>
 <body>
-  <h2>Importar backup EURUS</h2>
-  <div class="aviso">
-    ⚠️ Asegúrate de haber configurado el <code>firebase-config.js</code> con los datos
-    de tu nuevo proyecto Firebase antes de importar.
+
+<div class="app">
+  <header class="header">
+    <a href="dashboard.html" class="header-back">← Panel</a>
+    <div class="header-brand">
+      <img src="icons/logoEurusblanco.png" alt="EURUS" class="header-logo" />
+      <span class="header-title">Importar</span>
+    </div>
+  </header>
+
+  <div class="card">
+    <div class="card-title">Importar backup EURUS</div>
+    <div class="aviso">
+      ⚠️ Asegúrate de haber configurado el <code>firebase-config.js</code> con los datos
+      de tu nuevo proyecto Firebase antes de importar.
+    </div>
+    <p class="desc">
+      Selecciona el archivo <strong>backup-eurus-*.json</strong> que te enviaron
+      para cargarlo en tu Firebase.
+    </p>
+
+    <div class="zona" id="zona" onclick="document.getElementById('input-json').click()">
+      📂 Haz clic para seleccionar el archivo <strong>backup-eurus-*.json</strong>
+      <input type="file" id="input-json" accept=".json"/>
+    </div>
+
+    <div id="info-archivo" style="display:none;"></div>
+    <button class="btn" id="btn-importar" style="display:none">Importar a Firebase</button>
+    <div class="log" id="log">Esperando archivo...</div>
   </div>
-  <p style="color:#555;font-size:14px;">
-    Selecciona el archivo <strong>backup-eurus-*.json</strong> que te enviaron
-    para cargarlo en tu Firebase.
-  </p>
+</div>
 
-  <div class="zona" id="zona" onclick="document.getElementById('input-json').click()">
-    📂 Haz clic para seleccionar el archivo backup-eurus-*.json
-    <input type="file" id="input-json" accept=".json"/>
-  </div>
+<script type="module">
+  import { collection, doc, setDoc, Timestamp }
+    from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+  import { signInWithPopup, GoogleAuthProvider }
+    from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+  import { db, auth } from "./js/firebase-config.js";
 
-  <div id="info-archivo" style="display:none;font-size:13px;color:#1a5276;margin-bottom:8px;"></div>
-  <button class="btn" id="btn-importar" style="display:none">Importar a Firebase</button>
-  <div class="log" id="log">Esperando archivo...</div>
+  const log = msg => { document.getElementById("log").textContent += "\n" + msg; };
 
-  <script type="module">
-    import { collection, doc, setDoc, Timestamp }
-      from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
-    import { signInWithPopup, GoogleAuthProvider }
-      from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
-    import { db, auth } from "./js/firebase-config.js";
+  let backupData = null;
 
-    const log = msg => { document.getElementById("log").textContent += "\n" + msg; };
+  function isoATimestamp(val) {
+    if (!val) return null;
+    const d = new Date(val);
+    return isNaN(d.getTime()) ? null : Timestamp.fromDate(d);
+  }
 
-    let backupData = null;
-
-    function isoATimestamp(val) {
-      if (typeof val === "string" && /^\d{4}-\d{2}-\d{2}T/.test(val)) {
-        return Timestamp.fromDate(new Date(val));
+  function convertirFirestore(obj) {
+    if (!obj || typeof obj !== "object") return obj;
+    if (Array.isArray(obj)) return obj.map(convertirFirestore);
+    const out = {};
+    for (const [k, v] of Object.entries(obj)) {
+      if (v && typeof v === "object" && v.seconds != null && v.nanoseconds != null) {
+        out[k] = new Timestamp(v.seconds, v.nanoseconds);
+      } else if (typeof v === "string" && /^\d{4}-\d{2}-\d{2}T/.test(v)) {
+        out[k] = isoATimestamp(v) || v;
+      } else if (typeof v === "object") {
+        out[k] = convertirFirestore(v);
+      } else {
+        out[k] = v;
       }
-      if (val && typeof val === "object" && !Array.isArray(val)) {
-        const out = {};
-        for (const k of Object.keys(val)) out[k] = isoATimestamp(val[k]);
-        return out;
-      }
-      if (Array.isArray(val)) return val.map(isoATimestamp);
-      return val;
     }
+    return out;
+  }
 
-    document.getElementById("input-json").addEventListener("change", e => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = ev => {
-        try {
-          backupData = JSON.parse(ev.target.result);
-          const cols = Object.keys(backupData.colecciones || {});
-          const total = cols.reduce((s, c) => s + Object.keys(backupData.colecciones[c]).length, 0);
-          document.getElementById("info-archivo").style.display = "block";
-          document.getElementById("info-archivo").textContent =
-            `✓ Archivo: ${file.name} | Exportado: ${backupData.exportadoEn?.slice(0,10)} | ${total} documentos en ${cols.length} colecciones`;
-          document.getElementById("btn-importar").style.display = "block";
-          document.getElementById("log").textContent = "Archivo cargado. Presiona el botón para importar.";
-        } catch {
-          document.getElementById("log").textContent = "❌ El archivo no es un JSON válido.";
-        }
-      };
-      reader.readAsText(file);
-    });
-
-    document.getElementById("btn-importar").addEventListener("click", async () => {
-      if (!backupData) return;
-      const btn = document.getElementById("btn-importar");
-      btn.disabled = true;
-      btn.textContent = "Importando...";
-      document.getElementById("log").textContent = "";
-
+  document.getElementById("input-json").addEventListener("change", e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
       try {
-        if (!auth.currentUser) {
-          log("Iniciando sesión con Google...");
-          await signInWithPopup(auth, new GoogleAuthProvider());
-          log("✓ Sesión: " + auth.currentUser.email);
-        }
-
-        for (const [colNombre, docs] of Object.entries(backupData.colecciones)) {
-          log(`\nImportando ${colNombre}...`);
-          let ok = 0;
-          for (const [docId, data] of Object.entries(docs)) {
-            await setDoc(doc(collection(db, colNombre), docId), isoATimestamp(data));
-            ok++;
-          }
-          log(`  ✓ ${ok} documentos importados`);
-        }
-
-        log("\n✅ Importación completa. Ya puedes usar la app.");
-      } catch (e) {
-        log("\n❌ Error: " + e.message);
-        log("Verifica que firebase-config.js tenga la config correcta y que Firestore esté activado.");
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "Importar a Firebase";
+        backupData = JSON.parse(reader.result);
+        const info = document.getElementById("info-archivo");
+        info.style.display = "block";
+        const colecciones = Object.keys(backupData);
+        const totalDocs = colecciones.reduce((sum, c) => sum + (backupData[c]?.length || 0), 0);
+        info.textContent = `📄 ${file.name} · ${totalDocs} documentos en ${colecciones.length} colecciones`;
+        document.getElementById("btn-importar").style.display = "block";
+        log(`Archivo cargado: ${file.name}\n${totalDocs} documentos · ${colecciones.join(", ")}`);
+      } catch (err) {
+        log("Error al parsear JSON: " + err.message);
       }
-    });
-  </script>
+    };
+    reader.readAsText(file);
+  });
+
+  document.getElementById("btn-importar").addEventListener("click", async () => {
+    if (!backupData) return;
+    const btn = document.getElementById("btn-importar");
+    btn.disabled = true;
+    btn.textContent = "Importando...";
+
+    try {
+      if (!auth.currentUser) {
+        log("Iniciando sesión con Google...");
+        await signInWithPopup(auth, new GoogleAuthProvider());
+      }
+
+      log("Importación iniciada...");
+      for (const [coleccion, docs] of Object.entries(backupData)) {
+        if (!Array.isArray(docs) || !docs.length) continue;
+        log(` → ${coleccion}: ${docs.length} documentos...`);
+        for (const docData of docs) {
+          const id = docData.id || docData._id;
+          if (!id) { log("  ⚠️ Documento sin ID, saltando"); continue; }
+          const converted = convertirFirestore(docData);
+          delete converted.id; delete converted._id;
+          const ref = doc(db, coleccion, id);
+          await setDoc(ref, converted);
+        }
+        log(` ✓ ${coleccion} completada`);
+      }
+      log("\n✅ Importación finalizada exitosamente.");
+      btn.textContent = "✅ Completado";
+    } catch (err) {
+      log("❌ Error: " + (err.message || err));
+      btn.disabled = false;
+      btn.textContent = "Reintentar";
+    }
+  });
+</script>
 </body>
 </html>

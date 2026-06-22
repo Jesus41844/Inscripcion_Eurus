@@ -8,6 +8,7 @@
   --eurus-medio:    #1a5276;
   --eurus-claro:    #2471a3;
   --eurus-fondo:    #d6eaf8;
+  --eurus-oscuro:   #0d2a3d;
   --eurus-sombra:   rgba(21, 67, 96, 0.20);
 
   --gris-texto:     #1a2e3e;
@@ -21,6 +22,7 @@
   --amarillo:       #d4850a;
   --amarillo-fondo: #fef9e7;
   --azul-info:      #2471a3;
+  --verde-claro:    #27ae60;
 
   --sombra-sm:      0 2px 8px rgba(0,0,0,0.07);
   --sombra-md:      0 4px 16px rgba(0,0,0,0.10);

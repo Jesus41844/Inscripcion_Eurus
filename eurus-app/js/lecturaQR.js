@@ -1,7 +1,7 @@
 import { db, auth } from "./firebase-config.js";
 import {
   collection, doc, getDoc, getDocs, updateDoc,
-  query, orderBy, serverTimestamp
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 import { tienePermiso } from "./auth.js";
 
@@ -29,18 +29,24 @@ function alerta(tipo, msg) {
 async function cargarEventos() {
   dbg("INFO", "📋 Cargando eventos desde Firestore...");
   try {
-    const snap = await getDocs(query(collection(db, "eventos_eurus"), orderBy("creadoEn", "desc")));
+    const snap = await getDocs(collection(db, "eventos_eurus"));
     dbg("INFO", "📋 Eventos recibidos: " + snap.docs.length);
-    const sel  = el("sel-evento-qr");
+    const eventos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // Ordenar localmente para evitar errores si falta creadoEn o el índice
+    eventos.sort((a, b) => {
+      const ta = a.creadoEn?.toDate?.()?.getTime() || -1;
+      const tb = b.creadoEn?.toDate?.()?.getTime() || -1;
+      return tb - ta;
+    });
+    const sel = el("sel-evento-qr");
     sel.innerHTML = '<option value="">— Selecciona un evento —</option>';
-    snap.docs.forEach(d => {
-      const ev  = d.data();
+    eventos.forEach(ev => {
       const opt = document.createElement("option");
-      opt.value = d.id;
+      opt.value = ev.id;
       opt.textContent = ev.nombre;
       sel.appendChild(opt);
     });
-    if (snap.docs.length === 0) {
+    if (!eventos.length) {
       dbg("WARN", "⚠️ No hay eventos en la BD");
     }
   } catch (e) {

@@ -15,7 +15,7 @@ let participanteSel = null;
 let logSesion       = [];
 let qrDetectado     = false;
 let usandoFrontal   = false;
-let _capturando     = false;
+
 
 // ─── Alerta ──────────────────────────────────────────────────────────────────
 function alerta(tipo, msg) {
@@ -134,7 +134,6 @@ async function iniciarCamara() {
     escaneando = true;
     el("btn-iniciar").style.display = "none";
     el("btn-detener").style.display = "inline-flex";
-    el("btn-capturar").style.display = "inline-flex";
     el("btn-cambiar-camara").style.display = "inline-flex";
     el("scanner-activo").classList.add("activo");
     dbg("OK", "✅ Cámara iniciada correctamente");
@@ -156,7 +155,6 @@ async function detenerCamara() {
   escaneando = false;
   el("btn-iniciar").style.display = "inline-flex";
   el("btn-detener").style.display = "none";
-  el("btn-capturar").style.display = "none";
   el("btn-cambiar-camara").style.display = "none";
   el("scanner-activo").classList.remove("activo");
   dbg("INFO", "⏹ Cámara detenida");
@@ -170,7 +168,6 @@ async function cambiarCamara() {
     scanner = null;
   }
   escaneando = false;
-  el("btn-capturar").style.display = "none";
   el("btn-cambiar-camara").style.display = "none";
 
   usandoFrontal = !usandoFrontal;
@@ -315,7 +312,7 @@ async function cerrarResultado() {
   if (scanner && escaneando) {
     await scanner.resume();
   } else if (!scanner && !escaneando) {
-    // El scanner fue detenido por capturarFoto — reiniciarlo
+    // Reiniciar scanner si fue detenido
     await iniciarCamara();
   }
 }
@@ -378,150 +375,6 @@ el("input-scan-file").addEventListener("change", async e => {
   el("input-scan-file").value = "";
 });
 
-// ─── Capturar foto desde cámara ─────────────────────────────────────────────
-async function capturarFoto() {
-  dbg("SCAN", "🔍 capturarFoto() llamada — scanner=" + !!scanner + " escaneando=" + escaneando);
-  if (!scanner || !escaneando) { dbg("ERROR", "❌ capturarFoto: scanner inactivo"); return; }
-  if (!checkpointSel) { alerta("error", "Selecciona un checkpoint."); return; }
-  if (el("resultado-box").style.display === "block") { dbg("WARN", "⚠️ resultado-box ya visible"); return; }
-  if (_capturando) { dbg("WARN", "⚠️ ya capturando"); return; }
-  _capturando = true;
-
-  try {
-    // 1. Detener scanner para liberar la cámara
-    if (scanner) {
-      try { await scanner.stop(); } catch (_) {}
-      try { await scanner.clear(); } catch (_) {}
-      scanner = null;
-    }
-    escaneando = false;
-    el("btn-capturar").style.display = "none";
-    el("btn-detener").style.display = "none";
-    el("btn-cambiar-camara").style.display = "none";
-
-    dbg("INFO", "📸 Abriendo cámara para capturar frame (facingMode: environment)...");
-
-    // 2. Abrir stream rápido, tomar 1 frame y cerrar
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }
-    });
-    dbg("INFO", "📸 Stream abierto correctamente");
-
-    const video = document.createElement("video");
-    video.srcObject = stream;
-    await video.play();
-
-    const canvas = el("capture-canvas");
-    canvas.width = video.videoWidth || 1280;
-    canvas.height = video.videoHeight || 720;
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0);
-
-    stream.getTracks().forEach(t => t.stop());
-    video.srcObject = null;
-
-    dbg("INFO", "📸 Frame: " + canvas.width + "x" + canvas.height + " — stream cerrado");
-
-    // Mostrar preview
-    el("capture-preview").src = canvas.toDataURL("image/jpeg", 0.85);
-    el("capture-preview-wrap").style.display = "block";
-
-    let decodedText = null;
-
-    // --- Método 1: BarcodeDetector nativo (canvas directo) ---
-    if ('BarcodeDetector' in window) {
-      dbg("SCAN", "🔍 Ejecutando BarcodeDetector...");
-      try {
-        const detector = new BarcodeDetector({ formats: ['qr_code'] });
-        const codes = await detector.detect(canvas);
-        dbg("SCAN", "🔍 BarcodeDetector devolvió " + codes.length + " códigos");
-        if (codes.length > 0) {
-          decodedText = codes[0].rawValue;
-          dbg("DETECT", "🎯 QR vía BarcodeDetector: " + decodedText);
-        } else {
-          dbg("WARN", "⚠️ BarcodeDetector: no encontró QR");
-        }
-      } catch (e) {
-        dbg("WARN", "⚠️ BarcodeDetector falló: " + e.message);
-      }
-    } else {
-      dbg("WARN", "⚠️ BarcodeDetector NO disponible en este navegador");
-    }
-
-    // --- Método 2: ZXing (scanFileV2) como fallback ---
-    if (!decodedText) {
-      dbg("SCAN", "🔍 Ejecutando ZXing scanFileV2...");
-      try {
-        const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.9));
-        dbg("SCAN", "🔍 Blob creado: " + (blob.size / 1024).toFixed(1) + "KB");
-        const tempId = "temp-qr-" + Date.now();
-        const tempDiv = document.createElement("div");
-        tempDiv.id = tempId;
-        document.body.appendChild(tempDiv);
-        const tempScanner = new Html5Qrcode(tempId);
-        const r = await Promise.race([
-          tempScanner.scanFileV2(blob, true),
-          new Promise((_, reject) => setTimeout(() => reject("Timeout"), 15000))
-        ]);
-        decodedText = r.decodedText;
-        dbg("DETECT", "🎯 QR vía ZXing: " + decodedText);
-        tempScanner.clear();
-        document.body.removeChild(tempDiv);
-      } catch (e) {
-        const errMsg = (typeof e === "string") ? e : (e?.message || "");
-        dbg("SCAN", "🔍 ZXing catch: " + errMsg);
-        if (errMsg.includes("No MultiFormat Readers")) {
-          dbg("WARN", "⚠️ ZXing: QR no detectado (el QR puede estar borroso o mal alineado)");
-        } else if (errMsg.includes("Timeout")) {
-          dbg("WARN", "⚠️ ZXing: timeout (15s)");
-        } else {
-          console.error("[QR] ZXing error:", e);
-          dbg("ERROR", "❌ ZXing: " + errMsg);
-        }
-      }
-    }
-
-    // --- Procesar resultado ---
-    dbg("SCAN", "🔍 decodedText final: " + (decodedText || "null"));
-    if (decodedText) {
-      qrDetectado = true;
-      const snap = await getDoc(doc(db, "inscripciones_eurus", decodedText));
-      if (!snap.exists()) {
-        alerta("error", "QR no reconocido. Participante no encontrado.");
-        qrDetectado = false;
-      } else {
-        const p = { id: decodedText, ...snap.data() };
-        dbg("OK", "✅ Participante: " + p.nombre);
-        if (p.eventoId !== eventoActivo.id) {
-          alerta("error", "Este QR pertenece a otro evento (" + (p.eventoNombre || "?") + ").");
-          qrDetectado = false;
-        } else {
-          participanteSel = p;
-          dbg("SCAN", "🔍 Llamando mostrarInfoParticipante()...");
-          mostrarInfoParticipante(p);
-          dbg("SCAN", "🔍 mostrarInfoParticipante() ejecutado");
-        }
-      }
-    } else {
-      alerta("error", "QR no detectado. Espera un segundo y vuelve a intentar.");
-    }
-  } catch (e) {
-    console.error("[QR] Error en capturarFoto:", e);
-    dbg("ERROR", "❌ Error capturando: " + e.message);
-    alerta("error", "Error al capturar: " + e.message);
-  }
-
-  _capturando = false;
-
-  // Si no se detectó QR, reiniciar la cámara
-  if (!qrDetectado) {
-    el("btn-iniciar").style.display = "inline-flex";
-    await iniciarCamara();
-  }
-}
-
-el("btn-capturar").addEventListener("click", capturarFoto);
-
 // ─── Esperar rol ──────────────────────────────────────────────────────────────
 async function esperarRol() {
   for (let i = 0; i < 15; i++) {
@@ -533,24 +386,19 @@ async function esperarRol() {
   return false;
 }
 
-// ─── Recargar eventos (fallback manual) ──────────────────────────────────────
-el("btn-recargar-eventos").addEventListener("click", async () => {
-  dbg("INFO", "🔄 Recarga manual de eventos...");
-  await cargarEventos();
-  dbg("INFO", "🔄 Recarga completada");
-});
-
 // ─── Init ─────────────────────────────────────────────────────────────────────
 console.log("[QR] módulo lecturaQR.js ejecutándose");
-dbg("INFO", "📱 App iniciada — cargando eventos y verificando permisos");
+dbg("INFO", "📱 App iniciada — esperando autenticación y cargando eventos");
 
-// 1) Cargar eventos siempre (no depende de auth)
-await cargarEventos();
-
-// 2) Verificar permisos (redirige si no tiene acceso, sin bloquear la carga)
-esperarRol().then(ok => {
+async function init() {
+  const ok = await esperarRol();
   if (!ok) {
     dbg("ERROR", "❌ Sin permisos — redirigiendo a dashboard");
     window.location.href = "dashboard.html";
+    return;
   }
-});
+  dbg("OK", "✅ Autenticación verificada — cargando eventos");
+  await cargarEventos();
+}
+
+init();

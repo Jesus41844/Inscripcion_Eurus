@@ -163,6 +163,67 @@
         pointer-events: none;
         box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
       }
+
+      /* ── Debug panel ── */
+      #debug-panel {
+        position: fixed;
+        bottom: 12px;
+        right: 12px;
+        z-index: 9999;
+        font-family: monospace;
+        font-size: 11px;
+        line-height: 1.4;
+      }
+      #debug-toggle {
+        background: var(--eurus-medio);
+        color: #fff;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        cursor: pointer;
+        font-size: 18px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        float: right;
+      }
+      #debug-body {
+        clear: both;
+        margin-top: 4px;
+        background: rgba(0, 0, 0, 0.85);
+        color: #fff;
+        border-radius: 8px;
+        padding: 8px;
+        width: 320px;
+        max-height: 300px;
+        overflow-y: auto;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      }
+      #debug-title {
+        font-weight: 700;
+        font-size: 12px;
+        margin-bottom: 6px;
+        color: #8cf;
+      }
+      #debug-logs {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .dbg-entry {
+        padding: 2px 4px;
+        border-radius: 3px;
+        word-break: break-all;
+      }
+      .dbg-time {
+        color: #888;
+        margin-right: 4px;
+      }
+      .dbg-INFO  { color: #aac; }
+      .dbg-OK    { color: #4c4; }
+      .dbg-WARN  { color: #fa0; }
+      .dbg-ERROR { color: #f44; }
+      .dbg-SCAN  { color: #8cf; }
+      .dbg-DETECT{ color: #0f0; font-weight: 700; }
     </style>
   </head>
   <body>
@@ -187,7 +248,6 @@
             <select id="sel-evento-qr" style="flex: 1">
               <option value="">— Selecciona un evento —</option>
             </select>
-            <button class="btn btn-outline btn-sm" id="btn-recargar-eventos" style="width: auto; white-space: nowrap; font-size: 12px">⟳ Recargar</button>
           </div>
         </div>
         <div class="form-groupE" id="cp-section" style="display: none">
@@ -227,13 +287,6 @@
           </button>
           <button
             class="btn btn-outline btn-sm"
-            id="btn-capturar"
-            style="width: auto; display: none"
-          >
-            📸 Capturar
-          </button>
-          <button
-            class="btn btn-outline btn-sm"
             id="btn-cambiar-camara"
             style="width: auto; display: none"
           >
@@ -248,10 +301,6 @@
           <button class="btn btn-outline btn-sm" id="btn-test-qr" style="width: auto">🔄 Probar QR de prueba</button>
         </div>
         <canvas id="capture-canvas" style="display: none"></canvas>
-        <div id="capture-preview-wrap" style="display: none; margin-top: 8px; text-align: center">
-          <p style="font-size: 11px; color: var(--gris-medio); margin-bottom: 4px">📸 Última foto capturada:</p>
-          <img id="capture-preview" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 2px solid var(--eurus-claro)" />
-        </div>
         <p
           style="
             font-size: 12px;
@@ -382,81 +431,6 @@
         <div id="debug-logs"></div>
       </div>
     </div>
-
-    <style>
-      #debug-panel {
-        position: fixed;
-        bottom: 12px;
-        right: 12px;
-        z-index: 9999;
-        font-family: monospace;
-        font-size: 11px;
-        line-height: 1.4;
-      }
-      #debug-toggle {
-        background: var(--eurus-medio);
-        color: #fff;
-        border: none;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        cursor: pointer;
-        font-size: 18px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        float: right;
-      }
-      #debug-body {
-        clear: both;
-        margin-top: 4px;
-        background: rgba(0, 0, 0, 0.85);
-        color: #fff;
-        border-radius: 8px;
-        padding: 8px;
-        width: 320px;
-        max-height: 300px;
-        overflow-y: auto;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-      }
-      #debug-title {
-        font-weight: 700;
-        font-size: 12px;
-        margin-bottom: 6px;
-        color: #8cf;
-      }
-      #debug-logs {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-      }
-      .dbg-entry {
-        padding: 2px 4px;
-        border-radius: 3px;
-        word-break: break-all;
-      }
-      .dbg-time {
-        color: #888;
-        margin-right: 4px;
-      }
-      .dbg-INFO {
-        color: #aac;
-      }
-      .dbg-OK {
-        color: #4c4;
-      }
-      .dbg-WARN {
-        color: #fa0;
-      }
-      .dbg-ERROR {
-        color: #f44;
-      }
-      .dbg-SCAN {
-        color: #8cf;
-      }
-      .dbg-DETECT {
-        color: #0f0;
-        font-weight: 700;
-      }
-    </style>
 
     <script>
       // Debug logger: visible en pantalla y en consola

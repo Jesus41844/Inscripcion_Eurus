@@ -183,11 +183,11 @@
         <div class="card-title">Configuración de sesión</div>
         <div class="form-groupE">
           <label>Evento</label>
-          <div style="display:flex;gap:6px;align-items:center;">
-            <select id="sel-evento-qr" style="flex:1;">
+          <div style="display: flex; gap: 6px; align-items: center">
+            <select id="sel-evento-qr" style="flex: 1">
               <option value="">— Selecciona un evento —</option>
             </select>
-            <button class="btn btn-outline btn-sm" id="btn-recargar-eventos" style="width:auto;white-space:nowrap;font-size:12px;">⟳ Recargar</button>
+            <button class="btn btn-outline btn-sm" id="btn-recargar-eventos" style="width: auto; white-space: nowrap; font-size: 12px">⟳ Recargar</button>
           </div>
         </div>
         <div class="form-groupE" id="cp-section" style="display: none">
@@ -227,13 +227,31 @@
           </button>
           <button
             class="btn btn-outline btn-sm"
+            id="btn-capturar"
+            style="width: auto; display: none"
+          >
+            📸 Capturar
+          </button>
+          <button
+            class="btn btn-outline btn-sm"
             id="btn-cambiar-camara"
             style="width: auto; display: none"
           >
             🔄 Cambiar cámara
           </button>
         </div>
+        <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap">
+          <label class="btn btn-outline btn-sm" style="width: auto; cursor: pointer; text-align: center">
+            📁 Escanear desde imagen
+            <input type="file" id="input-scan-file" accept="image/*" style="display: none" />
+          </label>
+          <button class="btn btn-outline btn-sm" id="btn-test-qr" style="width: auto">🔄 Probar QR de prueba</button>
+        </div>
         <canvas id="capture-canvas" style="display: none"></canvas>
+        <div id="capture-preview-wrap" style="display: none; margin-top: 8px; text-align: center">
+          <p style="font-size: 11px; color: var(--gris-medio); margin-bottom: 4px">📸 Última foto capturada:</p>
+          <img id="capture-preview" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 2px solid var(--eurus-claro)" />
+        </div>
         <p
           style="
             font-size: 12px;

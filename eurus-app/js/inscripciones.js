@@ -303,7 +303,7 @@ function renderMapeoCols() {
 
 function leerMapeo() {
   const m = {};
-  CAMPOS_EURUS.forEach(c => { m[c.key] = el(`map-${c.key}`)?.value || ""; });
+  CAMPOS_EURUS.forEach(c => { m[c.key] = (el(`map-${c.key}`)?.value || "").replace(/[\r\n]+/g, "").trim(); });
   return m;
 }
 
@@ -355,13 +355,6 @@ el("btn-confirmar-importar").addEventListener("click", async () => {
   if (!filasArchivo.length) { mostrarAlerta("error", "Carga un archivo primero."); return; }
 
   const mapeo = leerMapeo();
-  console.log("[DEBUG] columnasArchivo:", JSON.stringify(columnasArchivo));
-  console.log("[DEBUG] Mapeo leído:", JSON.stringify(mapeo));
-  console.log("[DEBUG] Primera fila cruda:", JSON.stringify(filasArchivo[0]));
-  const prueba = filaAInscripcion(filasArchivo[0], mapeo);
-  console.log("[DEBUG] Primera inscripción generada:", JSON.stringify(prueba));
-  console.log("[DEBUG] Validación primera fila:", validarInscripcion(prueba));
-
   const prg   = el("importar-progreso");
   prg.style.display = "block";
   el("btn-confirmar-importar").disabled = true;

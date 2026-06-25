@@ -331,7 +331,6 @@ function filaAInscripcion(fila, mapeo) {
 function validarInscripcion(ins) {
   if (!ins.nombre)  return "Nombre vacío";
   if (!ins.correo)  return "Correo vacío";
-  if (!ins.cedula)  return "Cédula vacía";
   return null;
 }
 

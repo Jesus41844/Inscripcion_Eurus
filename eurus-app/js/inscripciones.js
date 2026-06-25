@@ -281,6 +281,14 @@ function procesarArchivo(archivo) {
 }
 
 function procesarFilas(headers, filas) {
+  // Sanitizar headers: eliminar \r, \n y espacios sobrantes (XLSX suele dejar \r\n al final)
+  const sanitize = s => String(s ?? "").replace(/[\r\n]+/g, "").replace(/^\s+|\s+$/g, "");
+  headers = headers.map(sanitize);
+  filas = filas.map(f => {
+    const limpio = {};
+    for (const [k, v] of Object.entries(f)) limpio[sanitize(k)] = v;
+    return limpio;
+  });
   columnasArchivo = headers;
   filasArchivo    = filas;
   renderMapeoCols();
@@ -358,6 +366,7 @@ el("btn-confirmar-importar").addEventListener("click", async () => {
   if (!filasArchivo.length) { mostrarAlerta("error", "Carga un archivo primero."); return; }
 
   const mapeo = leerMapeo();
+  console.log("[DEBUG] columnasArchivo:", JSON.stringify(columnasArchivo));
   console.log("[DEBUG] Mapeo leído:", JSON.stringify(mapeo));
   console.log("[DEBUG] Primera fila cruda:", JSON.stringify(filasArchivo[0]));
   const prueba = filaAInscripcion(filasArchivo[0], mapeo);

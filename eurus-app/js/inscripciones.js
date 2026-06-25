@@ -316,7 +316,10 @@ function leerMapeo() {
 }
 
 function filaAInscripcion(fila, mapeo) {
-  const get = key => String(fila[mapeo[key]] ?? "").trim();
+  // Sanitizar la fila: limpiar \r\n de las keys para que coincidan con el mapeo
+  const filaLimpia = {};
+  for (const [k, v] of Object.entries(fila)) filaLimpia[k.replace(/[\r\n]+/g, "").trim()] = v;
+  const get = key => String(filaLimpia[mapeo[key]] ?? "").trim();
   const temas = get("temasInteres").split(/[,;]+/).map(t => t.trim()).filter(Boolean);
   const pcch  = get("participacionCodeClash").toLowerCase();
   return {

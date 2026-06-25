@@ -402,10 +402,10 @@ el("btn-confirmar-importar").addEventListener("click", async () => {
     prg.textContent = `Procesando ${i + 1} / ${filasArchivo.length}...`;
     const ins  = filaAInscripcion(filasArchivo[i], mapeo);
     const fallo = validarInscripcion(ins);
-    if (fallo) { err++; continue; }
+    if (fallo) { console.log(`[IMPORT] Fila ${i+1} ERROR: ${fallo}`, JSON.stringify(ins)); err++; continue; }
 
     const emailNorm = ins.correo.toLowerCase();
-    if (emailsExistentes.has(emailNorm)) { dup++; continue; }
+    if (emailsExistentes.has(emailNorm)) { console.log(`[IMPORT] Fila ${i+1} DUPLICADO: ${emailNorm}`); dup++; continue; }
     emailsExistentes.add(emailNorm);
 
     try {
@@ -419,7 +419,7 @@ el("btn-confirmar-importar").addEventListener("click", async () => {
         importadoDeArchivo: "importacion_manual",
       });
       ok++;
-    } catch (e) { err++; }
+    } catch (e) { console.log(`[IMPORT] Fila ${i+1} FIREBASE ERROR: ${e.message}`); err++; }
   }
 
   prg.textContent = "";

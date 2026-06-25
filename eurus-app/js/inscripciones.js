@@ -230,10 +230,6 @@ const CAMPOS_EURUS = [
   { key: "facultad",            label: "Facultad",                       req: false },
   { key: "carrera",             label: "Carrera",                        req: false },
   { key: "ocupacion",           label: "Ocupación",                      req: false },
-  { key: "participacionCodeClash", label: "Participación CodeClashPython", req: false },
-  { key: "nivelPython",         label: "Nivel de experiencia en Python", req: false },
-  { key: "temasInteres",        label: "Temas de interés",               req: false },
-  { key: "tallaSueter",         label: "Talla de suéter",                req: false },
 ];
 
 const MAPEO_AUTO = {
@@ -245,10 +241,6 @@ const MAPEO_AUTO = {
   facultad:            ["facultad", "faculty"],
   carrera:             ["carrera", "program", "programa"],
   ocupacion:           ["ocupacion", "ocupación", "occupation"],
-  participacionCodeClash: ["codeclash", "code clash", "codeclashpython", "participación en codeclash", "participacion"],
-  nivelPython:         ["python", "nivel python", "experiencia python", "nivel de experiencia"],
-  temasInteres:        ["temas", "topics", "temas que te entusiasman", "temas de interés", "intereses"],
-  tallaSueter:         ["talla", "suéter", "sueter", "talla sueter", "sweater"],
 };
 
 function detectarColumna(campo, headers) {
@@ -320,8 +312,6 @@ function filaAInscripcion(fila, mapeo) {
   const filaLimpia = {};
   for (const [k, v] of Object.entries(fila)) filaLimpia[k.replace(/[\r\n]+/g, "").trim()] = v;
   const get = key => String(filaLimpia[mapeo[key]] ?? "").trim();
-  const temas = get("temasInteres").split(/[,;]+/).map(t => t.trim()).filter(Boolean);
-  const pcch  = get("participacionCodeClash").toLowerCase();
   return {
     nombre:               get("nombre"),
     correo:               get("correo").toLowerCase(),
@@ -331,10 +321,6 @@ function filaAInscripcion(fila, mapeo) {
     facultad:             get("facultad"),
     carrera:              get("carrera"),
     ocupacion:            get("ocupacion"),
-    participacionCodeClash: pcch === "sí" || pcch === "si" || pcch === "yes" || pcch === "true",
-    nivelPython:          get("nivelPython"),
-    temasInteres:         temas,
-    tallaSueter:          get("tallaSueter").toUpperCase().replace("TALLA ", ""),
     asistencias:          {},
     totalAsistencias:     0,
     certificadoEmitido:   false,
